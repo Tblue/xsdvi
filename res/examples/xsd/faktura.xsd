@@ -1,0 +1,128 @@
+﻿<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="urn:x-kibic:ns:faktura:2.0" targetNamespace="urn:x-kibic:ns:faktura:2.0" elementFormDefault="qualified">
+  <xs:simpleType name="cenaType">
+    <xs:restriction base="xs:decimal"/>
+  </xs:simpleType>
+  <xs:complexType name="subjektType">
+    <xs:sequence>
+      <xs:element name="nazev" type="xs:string"/>
+      <xs:element name="adresa">
+        <xs:complexType>
+          <xs:all>
+            <xs:element name="ulice" type="xs:string"/>
+            <xs:element name="psc">
+              <xs:simpleType>
+                <xs:restriction base="xs:unsignedInt">
+                  <xs:minInclusive value="10000"/>
+                  <xs:maxExclusive value="100000"/>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:element>
+            <xs:element name="mesto" type="xs:string"/>
+          </xs:all>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="ic" minOccurs="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:unsignedInt">
+            <xs:minInclusive value="10000000"/>
+            <xs:maxExclusive value="100000000"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="dic" minOccurs="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:length value="10"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="telefon" minOccurs="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:unsignedInt">
+            <xs:minInclusive value="100000000"/>
+            <xs:maxExclusive value="1000000000"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="email">
+        <xs:simpleType>
+          <xs:restriction base="xs:string"/>
+        </xs:simpleType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="faktura">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="dodavatel" type="subjektType"/>
+        <xs:element name="odberatel" type="subjektType"/>
+        <xs:element name="info">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="cisloUctu" type="xs:string"/>
+              <xs:element name="variabilniSymbol">
+                <xs:simpleType>
+                  <xs:restriction base="xs:unsignedInt">
+                    <xs:maxExclusive value="1000000000"/>
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+              <xs:element name="konstantniSymbol">
+                <xs:simpleType>
+                  <xs:restriction base="xs:unsignedInt">
+                    <xs:maxExclusive value="10000"/>
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+              <xs:element name="specifickySymbol">
+                <xs:simpleType>
+                  <xs:restriction base="xs:unsignedInt">
+                    <xs:maxExclusive value="10000"/>
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+              <xs:element name="datumVystaveni" type="xs:date"/>
+              <xs:element name="datumUskutecneniPlneni" type="xs:date"/>
+              <xs:element name="datumSplatnosti" type="xs:date"/>
+              <xs:element name="zpusobPlatby" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="dodavka">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="polozka" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="oznaceni" type="xs:string"/>
+                    <xs:element name="cenaBezDph" type="cenaType"/>
+                    <xs:element name="dph" type="cenaType"/>
+                    <xs:element name="cenaSDph" type="cenaType"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="soucet">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="cenaBezDph" type="cenaType"/>
+                    <xs:element name="dph" type="cenaType"/>
+                    <xs:element name="cenaSDph" type="cenaType"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="zaokrouhleni" type="xs:decimal"/>
+              <xs:element name="cenaCelkem" type="cenaType"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="cislo">
+        <xs:simpleType>
+          <xs:restriction base="xs:unsignedInt">
+            <xs:maxExclusive value="1000000000"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

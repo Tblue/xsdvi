@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg id='svg' width='190px' height='70px' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>
+<title>XsdVi</title>
+
+<defs>
+<style type='text/css'><![CDATA[
+svg {pointer-events: none;}
+text {font-family: arial; font-size: 11px;}
+line, polyline, polygon {fill: none; stroke: black;}
+
+.strong {font-size: 12px; font-weight: bold;}
+.small {font-size: 10px;}
+.big {font-size: 15px; fill: #882222;}
+
+.button {fill: white; stroke: black; pointer-events: all;}
+.shadow {fill: #ccccd8; stroke: none;}
+.connection {fill: none; stroke: #666666;}
+.empty {fill: none; stroke: black;}
+.filled {fill: black; stroke: none;}
+
+.boxelement, .boxany, .boxattribute1, .boxanyattribute {fill: #FFFFBB; stroke: #776633; pointer-events: all;}
+.boxattribute2 {fill: #FFFFBB; stroke: #776633; pointer-events: all; stroke-dasharray: 2;}
+.boxschema, .boxloop, .boxcompositor {fill: #E7EBF3; stroke: #666677;}
+.boxselector, .boxfield, .boxidc {fill: #E0F7B7; stroke: #667733;}
+
+.lax {fill: white; stroke: black;}
+.skip {fill: #cc6666; stroke: black;}
+.strict {fill: black; stroke: none;}
+
+.border {fill: #f9f9f9; stroke: #dddddd;}
+]]></style>
+</defs>
+<rect class='border' x='1' y='1' width='188' height='68'/>
+<g id='_1' class='box' transform='translate(40,10)'>
+<rect class='shadow' x='3' y='3' width='110' height='46' rx='9'/>
+<rect class='boxanyattribute' x='0' y='0' width='110' height='46' rx='9'/>
+<rect class='lax' x='6' y='34' width='6' height='6'/>
+<rect class='lax' x='16' y='34' width='6' height='6'/>
+<rect class='lax' x='26' y='34' width='6' height='6'/>
+<text x='5' y='13'>{namespace}</text>
+<text class='strong' x='5' y='27'>@</text>
+<line class='connection' x1='-35' y1='23' x2='0' y2='23'/>
+</g>
+
+</svg>

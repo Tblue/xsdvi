@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="urn:x-kibic:ns:skupina:1.0"
+           targetNamespace="urn:x-kibic:ns:skupina:1.0"
+           elementFormDefault="qualified">
+
+  <xs:element name="skupina">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="nazev" type="xs:string"/>
+        <xs:element name="styl" type="xs:string"/>
+        <xs:element name="datum_vzniku" type="xs:date" minOccurs="0"/>
+        <xs:element name="puvod" type="xs:string"/>
+        <xs:element name="oficialni_web" type="xs:anyURI"/>
+        <xs:element name="fotka" type="fotkaTyp" minOccurs="0"/>
+        <xs:element name="popis" type="popisTyp"/>
+        <xs:element name="clenove" type="clenoveTyp"/>
+        <xs:element name="alba" type="albaTyp" minOccurs="0"/>
+        <xs:element name="kontakty" type="kontaktyTyp"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:complexType name="fotkaTyp">
+    <xs:attribute name="zdroj" use="required" type="xs:string"/>
+    <xs:attribute name="popis" use="required" type="xs:string"/>
+    <xs:attribute name="sirka" use="required" type="xs:string"/>
+    <xs:attribute name="vyska" use="required" type="xs:string"/>
+  </xs:complexType>
+  
+  <xs:complexType name="popisTyp">
+    <xs:sequence maxOccurs="unbounded">
+      <xs:element name="odstavec" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="clenoveTyp">
+    <xs:sequence maxOccurs="unbounded">
+      <xs:element name="clen">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="jmeno" type="xs:string"/>
+            <xs:sequence maxOccurs="unbounded">
+              <xs:element name="nastroj" type="xs:string"/>
+            </xs:sequence>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="albaTyp">
+    <xs:sequence maxOccurs="unbounded">
+      <xs:element name="album">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="nazev" type="xs:string"/>
+            <xs:element name="vydano" type="xs:date"/>
+            <xs:element name="vydavatelstvi" type="xs:string"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="kontaktyTyp">
+    <xs:sequence maxOccurs="unbounded">
+      <xs:element name="kontakt">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="kontaktni_osoba" type="xs:string"/>
+            <xs:choice maxOccurs="2">
+              <xs:element name="mail" type="xs:string"/>
+              <xs:element name="telefon" type="xs:positiveInteger"/>
+            </xs:choice>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  
+</xs:schema>

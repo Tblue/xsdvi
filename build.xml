@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<project default="dist" name="xsdvi">
+    
+    <property file="build.properties"/>
+    
+    <target name="init" description="Initialization">
+        <tstamp/>
+    </target>
+    
+    <target name="backup" depends="init" description="Backups ${source.dir}, ${resources.dir}, ${library.dir}, ${build.xml}, ${build.properties}">
+        <mkdir dir="${backups.dir}"/>
+        <zip destfile="${backups.dir}/${DSTAMP}-${TSTAMP}-complet.zip" update="true">
+            <zipfileset dir="${source.dir}" prefix="${source.dir}"/>
+            <zipfileset dir="${resources.dir}" prefix="${resources.dir}"/>
+            <zipfileset dir="${library.dir}" prefix="${library.dir}"/>
+            <zipfileset file="${build.xml}"/>
+            <zipfileset file="${build.properties}"/>
+            
+            <zipfileset dir="thesis" prefix="thesis"/>
+        </zip>
+    </target>
+    
+    <target name="compile" depends="init" description="Compile the java code from ${source.dir} into ${build.dir}">
+        <mkdir dir="${build.dir}"/>
+        <javac srcdir="${source.dir}" destdir="${build.dir}"/>
+    </target>
+    
+    <target name="javadoc" depends="compile" description="Generate javadoc from all .java files">
+        <delete dir="${documents.dir}/api"/>
+        <mkdir dir="${documents.dir}/api"/>
+        <javadoc sourcepath="${source.dir}" destdir="${documents.dir}/api" classpath="${build.dir}"/>
+    </target>
+    
+    <target name="dist" depends="compile" description="Create the distribution jar file">
+        <mkdir dir="${distribution.dir}"/>
+        <copy todir="${distribution.dir}">
+            <fileset dir="${resources.dir}"/>
+        </copy>
+        <copy todir="${distribution.dir}/${library.dir}">
+            <fileset dir="${library.dir}"/>
+        </copy>
+        <echo file="${distribution.dir}/${examples.dir}.bat">
+java -jar ${library.dir}/${name}.jar ${examples.dir}/xsd/ipo.xsd ${examples.dir}/xsd/skupina.xsd ${examples.dir}/xsd/mix.xsd ${examples.dir}/xsd/faktura.xsd -generateStyle ${name}.css
+        </echo>
+        <jar jarfile="${distribution.dir}/${library.dir}/${name}.jar" basedir="${build.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${main-class}"/>
+                <attribute name="Class-Path" value="${class-path}"/>
+            </manifest>
+        </jar>
+    </target>
+    
+    <target name="publish" depends="dist" description="Make zip files to deploy">
+        <mkdir dir="${publish.dir}"/>
+        <zip destfile="${publish.dir}/${name}-${DSTAMP}-${TSTAMP}.zip" update="true">
+            <zipfileset dir="${distribution.dir}"/>
+        </zip>
+        <zip destfile="${publish.dir}/${name}-src-${DSTAMP}-${TSTAMP}.zip" update="true">
+            <zipfileset dir="${library.dir}" prefix="${library.dir}"/>
+            <zipfileset dir="${resources.dir}" prefix="${resources.dir}"/>
+            <zipfileset dir="${source.dir}" prefix="${source.dir}"/>
+            <zipfileset file="${build.xml}"/>
+            <zipfileset file="${build.properties}"/>
+        </zip>
+        <copy todir="${publish.dir}" file="${thesis.dir}/${thesis.xml}"/>
+        <copy todir="${publish.dir}" file="${thesis.dir}/${thesis.pdf}"/>
+        <zip destfile="${publish.dir}/thesis-${DSTAMP}-${TSTAMP}.zip" update="true">
+            <zipfileset file="${thesis.dir}/${thesis.xml}"/>
+            <zipfileset file="${thesis.dir}/${thesis.xsl}"/>
+            <zipfileset file="${thesis.dir}/${tp-fo.xsl}"/>
+            <zipfileset file="${thesis.dir}/${kizi.pdf}"/>
+        </zip>
+    </target>
+    
+    <target name="cd" depends="dist" description="Make zip files to deploy">
+        <mkdir dir="${cd.dir}"/>
+        <copy todir="${cd.dir}/${distribution.dir}">
+            <fileset dir="${distribution.dir}"/>
+        </copy>
+        <copy todir="${cd.dir}/${library.dir}">
+            <fileset dir="${library.dir}"/>
+        </copy>
+        <copy todir="${cd.dir}/${resources.dir}">
+            <fileset dir="${resources.dir}"/>
+        </copy>
+        <copy todir="${cd.dir}/${source.dir}">
+            <fileset dir="${source.dir}"/>
+        </copy>
+        <copy todir="${cd.dir}/${thesis.dir}/${symbols.dir}">
+            <fileset dir="${thesis.dir}/${symbols.dir}"/>
+        </copy>
+        <copy todir="${cd.dir}/${thesis.dir}/${images.dir}">
+            <fileset dir="${thesis.dir}/${images.dir}"/>
+        </copy>
+        <copy todir="${cd.dir}" file="${build.xml}"/>
+        <copy todir="${cd.dir}" file="${build.properties}"/>
+        <copy todir="${cd.dir}/${thesis.dir}" file="${thesis.dir}/${kizi.pdf}"/>
+        <copy todir="${cd.dir}/${thesis.dir}" file="${thesis.dir}/${thesis.pdf}"/>
+        <copy todir="${cd.dir}/${thesis.dir}" file="${thesis.dir}/${thesis.xml}"/>
+        <copy todir="${cd.dir}/${thesis.dir}" file="${thesis.dir}/${thesis.xsl}"/>
+        <copy todir="${cd.dir}/${thesis.dir}" file="${thesis.dir}/${tp-fo.xsl}"/>
+    </target>
+    
+    <target name="clean" description="Delete the ${build.dir}, ${distribution.dir} and ${documents.dir} directory trees">
+        <delete dir="${build.dir}"/>
+        <delete dir="${distribution.dir}"/>
+        <delete dir="${cd.dir}"/>
+        <delete dir="${documents.dir}"/>
+    </target>
+    
+</project>

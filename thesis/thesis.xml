@@ -1,0 +1,4256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
+<book lang="cs">
+  <bookinfo>
+    <title>Vizualizace XML schémat</title>
+
+    <subtitle>Bakalářská práce</subtitle>
+
+    <author>
+      <firstname>Václav</firstname>
+
+      <surname>Slavětínský</surname>
+
+      <affiliation>
+        <orgname>Vysoká škola ekonomická v Praze</orgname>
+
+        <orgdiv role="fakulta">Fakulta informatiky a statistiky</orgdiv>
+
+        <orgdiv role="katedra">Katedra informačního a znalostního
+        inženýrství</orgdiv>
+      </affiliation>
+    </author>
+
+    <othername role="vedouci">Ing. Jiří Kosek</othername>
+
+    <pubdate>květen 2008</pubdate>
+
+    <abstract>
+      <title>Poděkování</title>
+
+      <para>Rád bych poděkoval Ing. Jiřímu Koskovi za odborné vedení, cenné
+      rady a hodnotné podněty, jež mi poskytl při psaní této práce.</para>
+    </abstract>
+
+    <abstract>
+      <title>Prohlášení</title>
+
+      <para>Prohlašuji, že jsem bakalářskou práci vypracoval samostatně a
+      použil pouze literaturu uvedenou v přiloženém seznamu. Nemám námitek
+      proti půjčení práce se souhlasem katedry ani proti zveřejnění práce nebo
+      její části.</para>
+
+      <?vskip 70pt?>
+
+      <para>V Praze dne 1. května 2008</para>
+
+      <?vskip 30pt?>
+
+      <para><?hskip 300pt?>Václav Slavětínský</para>
+    </abstract>
+
+    <abstract>
+      <title>Abstrakt</title>
+
+      <para>Bakalářská práce se zabývá návrhem a implementací aplikace, která
+      bude sloužit k převodu <emphasis>W3C XML schématu</emphasis> do
+      interaktivního diagramu ve formátu <emphasis>SVG (Scalable Vector
+      Graphics)</emphasis>. Diagram bude možné použít jako součást dokumentace
+      XML souborů vyhovujících schématu; bude znázorňovat strukturu dokumentů
+      a údaje o jednotlivých položkách – elementech, atributech. Cílem je
+      generovat interaktivní a přehlednou grafiku, abychom uživatelům
+      usnadnili orientaci a pochopení XML dokumentů.</para>
+
+      <para>První část práce obsahuje stručný popis technologií a způsobu
+      jejich použití v rámci aplikace. Je zde zařazeno i zhodnocení několika
+      open source implementací abstraktního datového modelu XML schématu. Z
+      nich je vybrána jedna – <emphasis>Xerces2-J</emphasis>. Xerces poskytne
+      jednoduchý přístup ke kompontám schématu a jejich vlastnostem a vytvoří
+      tak programový základ. Další kapitoly se zabývají návrhem. Nejprve jde o
+      návrh grafického modelu včetně zajištění jeho interaktivity. Naleznete
+      zde obrázky grafických symbolů, které znázorňují jednotlivé komponenty
+      XML schématu, a popis jejich parametrů. Dodatečně je možné měnit vzhled,
+      především barvy, pomocí externího stylu. Následně je uveden algoritmus,
+      jehož úkolem je projít komponentami a vytěžit z nich data pro
+      vizualizaci.</para>
+
+      <para>Praktickým výsledkem bakalářské práce je program napsaný v jazyce
+      <emphasis>Java</emphasis>, který provádí zde popsanou transformaci XML
+      schématu do jeho grafické podoby.</para>
+    </abstract>
+
+    <abstract lang="en">
+      <title>Abstract</title>
+
+      <para>This thesis deals with design and implementation of an
+      application, that will serve to transform <emphasis>W3C XML
+      Schema</emphasis> into an interactive diagram in SVG format
+      (<emphasis>Scalable Vector Graphics</emphasis>). The diagram can be used
+      as a part of documentation for schema conforming XML files; it will
+      represent structure of XML files and it will provide information about
+      individual items – elements and attributes. The goal is to generate
+      interactive and well arranged graphics, so that we simplify the
+      orientation and understanding of XML documents for users.</para>
+
+      <para>The first part of this work contains a brief description of
+      technologies and their usage within the application. A review of some
+      open-source XML Schema abstract data model implementations is also
+      included. One of them – <emphasis>Xerces2-J</emphasis> – is chosen to
+      provide simple access to schema components and their properties. By
+      doing so, it will create the base for the program. Next chapters deal
+      with the design. At first they are concerned to design the graphical
+      model including its interactivity. You can find here pictures of
+      graphical symbols, that represents the individual XML Schema components,
+      and a description of their parameters. Additionally, it is possible to
+      change the appearance of the symbols via an extern style, especially
+      colors. After that, an algorithm is presented, that should walk through
+      the components and extract data for the visualization.</para>
+
+      <para>The practical result of this thesis is a program, written in
+      language <emphasis>Java</emphasis>. It performs the transformation of
+      XML Schema into its graphical form that is described here.</para>
+    </abstract>
+  </bookinfo>
+
+  <chapter>
+    <title>Úvod</title>
+
+    <para>Jazyk XML umožňuje vývojářům, při dodržení syntaktických pravidel,
+    vytvářet vlastní formáty pro uchování a sdílení dat. Pokud chceme tyto
+    formáty automatizovaně zpracovávat a validovat, potřebujeme jejich
+    formální deklaraci a dokumentaci, tedy popis který umožní jejich sdílení,
+    definování a použití. Pro tyto účely vzniklo několik jazyků. Patří k nim
+    především W3C <emphasis>XML schéma</emphasis>, DTD (<emphasis>Document
+    Type Definition</emphasis>) a Oasis <emphasis>Relax NG</emphasis>.</para>
+
+    <para>Díky začlenění do dalších standardů pracujících s XML, díky širokým
+    možnostem a podpoře velkých softwarových společností je velmi často
+    využíváno XML schéma. Jeho specifikace (viz <xref linkend="XSD1" />, <xref
+    linkend="XSD2" />) je však poměrně složitá a schémata se mohou stát pro
+    uživatele nepřehledná. Důvodem jsou různé možnosti zápisu, vyplývající
+    z objektových prvků tohoto jazyka. V XML schématu je umožněno používání
+    datových typů, jejich rozšiřování a omezování; vytváření referencí na
+    elementy, atributy a skupiny elementů či atributů; elementy lze vzájemně
+    nahrazovat mechanismem substitučních skupin; dále je možné importovat,
+    vkládat a předefinovat externí schémata, respektive jejich části.</para>
+
+    <para>Téma této práce je vizualizace XML Schémat. Cílem je navrhnout a
+    implementovat aplikaci, která by na vstupu načetla instanci W3C XML
+    schématu a jako výstup by uložila její interaktivní grafickou reprezentaci
+    ve formátu SVG (<emphasis>Scalable Vector Graphics</emphasis>) <xref
+    linkend="SVG" />. Tuto grafickou reprezentaci či diagram bude možné použít
+    jako součást dokumentace XML souborů vyhovujících schématu. Diagram bude
+    zobrazovat struktury použitelných elementů a atributů, jejich jména,
+    jmenné prostory, datové typy a dodatečné informace – kardinalitu elementů,
+    povinné/volitelné použití atributů, definované unikátní, primární a cizí
+    klíče atd. Umožněno bude také procházení struktur, rozevírání a skrývání
+    podskupin elementů a atributů, s využitím
+    <emphasis>ECMAScriptu</emphasis>. K důležitým požadavkům patří, aby byla
+    grafika interaktivní, intuitivní a přehledná, neboť smysl práce spočívá
+    především v usnadnění orientace a pochopení XML schémat ze strany jejich
+    uživatelů – tvůrců XML dokumentů.</para>
+
+    <para>SVG soubory lze otevřít v moderních prohlížečích webových stránek (u
+    některých je třeba nainstalovat SVG plug-in) nebo v aplikacích určených k
+    prohlížení či editaci vektorové grafiky. Mnohé z nich jsou volně dostupné.
+    Vektorová grafika používá k reprezentaci obrázků geometrické objekty a
+    díky tomu ji lze snadno programově upravovat. Jisté omezení však vyplývá
+    z náročnosti zpracování a pomalé implementci ECMAScriptu v prohlížečích.
+    To začne být patrné u velkých schémat, nebo spíše velkých struktur
+    popisovaných dokumentů (i poměrně krátkým schématem lze definovat rozsáhlé
+    struktury). Omezení se projevuje v pomalejší reakci na události a obecně v
+    pomalejším vykreslování diagramu. V této oblasti lze jen doufat, že do
+    budoucna vznikne lepší podpora.</para>
+
+    <para>Samotná aplikace bude napsána v programovacím jazyce Java a bude
+    využívat balíčky parseru <emphasis>Xerces</emphasis>, který je open source
+    implementací rozhraní definovaného v <xref linkend="XSD1" /> a <xref
+    linkend="XSD2" />. Pro spuštění bude třeba mít nainstalované běhové
+    prostředí (<emphasis>Java Runtime Envioronment</emphasis>) příslušné
+    verze. Dnes je však JRE běžnou součástí většiny počítačů. Díky využití
+    Javy bude aplikace snadno přenositelná na různé platformy.</para>
+
+    <para>Nyní se stručně zmíním o struktuře práce. Cílem druhé kapitoly je
+    seznámit čtenáře s technologiemi použitými v rámci aplikace a se způsobem
+    jejich použití. Jde o W3C XML schéma, Scalable Vector Graphics, ECMAScript
+    a Document Object Model, Cascading Style Sheets, jazyk Java.</para>
+
+    <para>Zvláštní kapitola (třetí) je věnována možnostem načtení a
+    interpretace modelu XML schématu. Je tu popis několika open source
+    implementací abstraktního datového modelu XML schématu a jejich
+    zhodnocení. Z těchto implementací jsem nakonec vybral procesor Xerces2-J.
+    Vytvoří základ programu tím, že poskytne jednoduchý přístup ke kompontám
+    schématu a jejich vlastnostem.</para>
+
+    <para>Čtvrtá kapitola se zabývá návrhem grafického modelu. Nejprve je
+    vybrán vhodný typ, logický model; ten přehledně zobrazí strukturu
+    definovaných XML dokumentů. Následuje rozbor jednotlivých prvků –
+    grafických symbolů kompenent schématu – a jejich struktury. U každého
+    symbolu naleznete obrázky, význam a popis parametrů ve vztahu k
+    vlastnostem komponent schématu. Dále je popsán mechanismus zajištění
+    interaktivity modelu a možnost dodatečných úprav vzhledu pomocí externího
+    stylu.</para>
+
+    <para>Cílem páté kapitoly je navrhnout algoritmus zpracování schématu. Je
+    třeba projít některými komponentami a vytěžit z jejich vlastností data pro
+    vizualizaci. Zpracování komponent, jejichž význam je zde také popsán,
+    obstarávají jednotlivé metody. Ty se navzájem volají, předávají si
+    parametry a vytváří grafické symboly pro pozdější uložení do SVG
+    souboru.</para>
+
+    <para>V závěru se pokusím o shrnutí výsledků práce a uvedu, kde je možné
+    aplikaci stáhnout.</para>
+  </chapter>
+
+  <chapter>
+    <title>Použité technologie</title>
+
+    <section>
+      <title>XML schéma</title>
+
+      <para>XML, <emphasis>Extensible Markup Language</emphasis>, rozšiřitelný
+      značkovací jazyk umožňuje vývojářům vytvářet vlastní formáty pro
+      uchování a sdílení dat. Vznikají tím jakési nové slovníky položek –
+      elementů a jejich vlastností – atributů. Pokud chceme tyto formáty
+      automatizovaně zpracovávat a validovat, potřebujeme jejich formální
+      deklaraci a dokumentaci, tedy popis který umožní sdílení, definování a
+      použití vzniklých slovníků.</para>
+
+      <para><emphasis>XML schéma</emphasis><footnote>
+          <para>Druhé vydání je z 28. října 2004, první bylo schváleno 2.
+          května 2001.</para>
+
+          <para>W3C: <emphasis>XML Schema</emphasis>. <ulink
+          url="http://www.w3.org/XML/Schema">http://www.w3.org/XML/Schema</ulink></para>
+        </footnote> je specifikace vydaná konsorciem W3C.<footnote>
+          <para>World Wide Web Consortium, oficiální webové stránky. <ulink
+          url="http://www.w3.org/">http://www.w3.org/</ulink></para>
+        </footnote> Definuje jazyk, využívající objektově orientovaný přístup,
+      který lze použít pro formální popis XML dokumentů; poskytuje prostředky
+      pro definování jejich struktury, obsahu a sémantiky. Konkrétně můžeme
+      pomocí schématu definovat elementy a atributy použitelné v dokumentu,
+      včetně jejich struktury – vzájemného zanořování a kombinování; můžeme
+      také určit datový typ pro obsah elementu nebo atributu, implicitní
+      hodnoty a další integritní omezení. K těm patří především unikátní klíče
+      (<emphasis>unique</emphasis>), primární klíče (<emphasis>key</emphasis>)
+      a na ně odkazující cizí klíče (<emphasis>keyref</emphasis>).</para>
+
+      <para>XML schéma bývá často srovnáváno s jiným obvyklým schémovým
+      jazykem – DTD, <emphasis>Document Type Definition</emphasis>. Ten byl
+      zahrnut již v XML 1.0 specifikaci W3C <xref linkend="XML" />. Mezi
+      nejdůležitější rozdíly patří to, že DTD využívá vlastní syntaxe, zatímco
+      XML schéma je aplikací XML, to znamená, že využíva jeho syntaxi. Dalším
+      důvodem pro volbu XML schématu je možnost přiřazení datových typů
+      atributům a obsahu elementů. Tuto základní vlastnost DTD nemělo, takže
+      se všemi hodnotami zacházelo jako s textovými řetězci. Stejně tak nebylo
+      možné pracovat se jmennými prostory. Přesto jsou DTD stále velmi
+      užívané, především kvůli jednoduchosti.</para>
+
+      <para>Specifikace XML schématu a jeho XML zápis jsou naopak komplexní a
+      v některých místech poměrně obtížné na pochopení a použití. Vznikly
+      proto i další jazyky: <emphasis>Relax NG</emphasis> s běžnou (XML) a
+      kompaktní syntaxí a <emphasis>Schematron</emphasis> s odlišným přístupem
+      – pro validaci podle pravidel. XML schéma má však nejširší využití, také
+      proto, že ho delší dobu podporují velké softwarové firmy (Microsoft,
+      IBM, Oracle, Sun).</para>
+
+      <para>XML schéma formalizuje omezení, vyjádřená jako pravidla nebo model
+      struktury, kterým odpovídá určitá třída XML dokumentů. Schémata slouží
+      často jako nástroje designu, zakládající framework, na němž mohou být
+      postaveny konkrétní implementace. Existuje několik typických oblastí
+      použití schémat. Jedná se především o validaci, dokumentaci, dotazování,
+      data binding a editaci <xref linkend="XSD-VLIST" />:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>Validací</emphasis> se rozumí ověření shody XML
+          dokumentu se schématem. Často se využívá pro kontrolu XML vstupu do
+          aplikace. Funguje jako filtr; dokumenty vyhovující schématu projdou,
+          ostatní nebudou použity. Tato externí kontrola značně zjednodušuje
+          aplikace, které by jinak musely ošetřovat spoustu výjimek vzniklých
+          při zpracování nevyhovujících XML vstupů.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>Dokumentace</emphasis> znamená v tomto případě popis
+          vyhovujících XML dokumentů. Je formální a strojově čitelná. Jelikož
+          je XML schéma XML dokumentem, lze formální dokumentaci snadno
+          převést tak, aby byla snadno čitelná i pro člověka, například
+          použitím XSLT transformací, nebo jiných transformací. <emphasis>Také
+          aplikace, jež je výsledkem této bakalářské práce provádí takový
+          převod, na podobu obrazovou.</emphasis></para>
+        </listitem>
+
+        <listitem>
+          <para>Schémata poskytují podporu pro
+          <emphasis>dotazování</emphasis>, vyhledávání obsahu v XML
+          dokumentech. To je sice možné provádět i bez nich, ale dodatečná
+          informace o struktuře a datových typech pomůže zrychlit a
+          zefektivnit jak vyhledávání, tak i řazení a porovnávání. Využití
+          nalezneme v jazycích <emphasis>XPath 2.0</emphasis>, <emphasis>XSLT
+          2.0</emphasis>, <emphasis>XQuery 1.0</emphasis>.</para>
+        </listitem>
+
+        <listitem>
+          <para>XML schémata jsou od svého počátku využívána pro
+          <emphasis>data binding</emphasis>. Tím se zde rozumí převádění dat
+          obsažených v XML dokumentech do struktur konkrétních aplikací,
+          jakými jsou objekty v objektově orientovaných systémech a relační
+          tabulky relačních databázových systémů. Schémata poskytují dodatečné
+          informace o datových typech, které se převedou do datových typů té
+          které aplikace.</para>
+        </listitem>
+
+        <listitem>
+          <para>Schémata obecně je možné použít při
+          <emphasis>editaci</emphasis> XML dokumentů. Například tato práce
+          vzniká v <emphasis>DocBooku</emphasis>, což je také aplikace XML.
+          Editor, který používám, mi dáva na výběr pouze elementy, které jsou
+          podle schématu na daném místě přípustné. To výrazně usnadňuje práci.
+          Editor využívá DTD DocBooku, poskytující informaci o struktuře, XML
+          schémata nadto poskytnou informaci o datových typech.</para>
+        </listitem>
+      </itemizedlist>
+
+      <bridgehead>Komponenty schématu</bridgehead>
+
+      <para>Procesory XML schémat, vyhovující specifikaci W3C <xref
+      linkend="XSD1" />, musí pracovat s informacemi obsaženými ve schématu
+      tak, jak je to ve specifikaci popsáno. Na XML schéma se zde nahlíží jako
+      na abstraktní datový model konceptuální úrovně, nezávislý na
+      implementaci. Datový model se skládá z jednotlivých, přesně definovaných
+      součástí – <emphasis>komponent</emphasis>. Každá z nich zahrnuje popis
+      XML reprezentace, vlastností a omezení, popis validačních pravidel,
+      příspěvků k PSVI (<emphasis>Post Schema Validation
+      Infoset</emphasis>),<footnote>
+          <para>Jedná se o XML infoset (množinu informací), rozšířený o
+          dodatečné informace o typu jednotlivých položek – elementů,
+          atributů, obecně uzlů.</para>
+        </footnote> a případných vestavěných instancí těchto komponent.</para>
+
+      <para>Definice zní takto: <quote><emphasis>Komponenta
+      schématu</emphasis> je obecný termín, který zastupuje stavební prvky
+      tvořící abstraktní datový model schématu… <emphasis>XML
+      schéma</emphasis> je množinou komponent schématu.</quote><footnote>
+          <para><xref linkend="XSD1" /> XML Schema Abstract Data Model. <ulink
+          url="http://www.w3.org/TR/xmlschema-1/#concepts-data-model">http://www.w3.org/TR/xmlschema-1/#concepts-data-model</ulink></para>
+        </footnote></para>
+
+      <para>Existuje 13 druhů komponent, spadajících do 3 skupin.
+      <emphasis>Aplikace s nimi bude pracovat způsobem popsaným v kapitole
+      <xref linkend="XSD-PROCESSING" />. </emphasis>Pro rychlé pochopení vazeb
+      mezi komponentami slouží obrázek <xref lang=""
+      linkend="DIAGRAM_KOMPONENT" />.<footnote>
+          <para>Tamtéž.</para>
+        </footnote></para>
+
+      <figure id="DIAGRAM_KOMPONENT">
+        <title>Diagram komponent XML schématu</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="images/components.gif" format="GIF" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <para>Primární komponenty mohou nebo musí být pojmenované:</para>
+
+      <itemizedlist spacing="compact">
+        <listitem>
+          <para>definice jednoduchých typů (<emphasis>Simple type
+          definitions</emphasis>),</para>
+        </listitem>
+
+        <listitem>
+          <para>definice komplexních typů (<emphasis>Complex type
+          definitions</emphasis>),</para>
+        </listitem>
+
+        <listitem>
+          <para>deklarace atributů (<emphasis>Attribute
+          declarations</emphasis>),</para>
+        </listitem>
+
+        <listitem>
+          <para>deklarace elementů (<emphasis>Element
+          declarations</emphasis>).</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Sekundární komponenty musí mít jména:</para>
+
+      <itemizedlist spacing="compact">
+        <listitem>
+          <para>definice skupin atributů (<emphasis>Attribute group
+          definitions</emphasis>),</para>
+        </listitem>
+
+        <listitem>
+          <para>definice identitních omezení (<emphasis>Identity-constraint
+          definitions</emphasis>),</para>
+        </listitem>
+
+        <listitem>
+          <para>definice modelových skupin (<emphasis>Model group
+          definitions</emphasis>),</para>
+        </listitem>
+
+        <listitem>
+          <para>deklarace notací (<emphasis>Notation
+          declarations</emphasis>).</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Pomocné komponenty poskytují přístup k jiným komponentám. Jsou
+      závislé na kontextu:</para>
+
+      <itemizedlist spacing="compact">
+        <listitem>
+          <para>anotace (<emphasis>Annotations</emphasis>),</para>
+        </listitem>
+
+        <listitem>
+          <para>modelové skupiny (<emphasis>Model groups</emphasis>),</para>
+        </listitem>
+
+        <listitem>
+          <para>částice (<emphasis>Particles</emphasis>),</para>
+        </listitem>
+
+        <listitem>
+          <para>divoké karty (<emphasis>Wildcards</emphasis>),</para>
+        </listitem>
+
+        <listitem>
+          <para>užití atributů (<emphasis>Attribute Uses</emphasis>).</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title>SVG</title>
+
+      <para><emphasis>Scalable Vector Graphics</emphasis>, škálovatelná
+      vektorová grafika vznikla také na půdě konsorcia W3C. Základ vývoje
+      tvoří specifikace SVG 1.1 <xref linkend="SVG" />. Kolem ní však existuje
+      a vzniká řada dalších: <emphasis>SVG Tiny 1.2</emphasis>, <emphasis>SVG
+      Mobile 1.1</emphasis>, <emphasis>SVG Print</emphasis>, <emphasis>SVG
+      Filters</emphasis>, <emphasis>SVG Requirements</emphasis>. Jejich
+      předmětem je jazyk pro popis dvourozměrné grafiky a grafických aplikací
+      pomocí XML. Jedná se přitom o vektorovou grafiku, která používá k
+      reprezentaci obrázků geometrické objekty. To přináší možnost škálování –
+      zmenšování a zvětšování – bez ztráty kvality; objekty, z nichž se obraz
+      skládá, jsou odlišeny a vzniklé soubory zabírají obvykle méně místa než
+      soubory bitmapové. Je samozřejmé, že se vektorová grafika hodí pouze na
+      některé druhy obrázků, jako jsou třeba symboly, diagramy nebo grafy.
+      <emphasis>Výstup aplikace, jež je předmětem této práce, bude diagram XML
+      schématu v SVG.</emphasis></para>
+
+      <para>Formát SVG byl navržen hlavně pro použití na webu, díky tomu je ho
+      dnes možné přímo otevřít v prohlížečích Mozilla Firefox, Opera; v MS
+      Internet Explorer bohužel až po nainstalování příslušného zásuvného
+      modulu (Adobe SVG Viewer). Stejně tak je formát podporován
+      i v komerčních (Adobe Illustrator, CorelDraw) či open source (Inkscape,
+      Sodipodi) editorech.</para>
+
+      <para>SVG poskytuje tři typy grafických objektů. Jsou to tvary vektorové
+      grafiky, například cesty složené z úseček a křivek, obrázky a text. Tyto
+      objekty mohou být seskupovány, lze je transformovat, předrenderovat a
+      přiřadit jim styly. K dalším funkcím patří vnořené transformace,
+      ořezávání objektů podle cest, alpha masking, filtrování obrazu a objekty
+      sloužící jako šablony.</para>
+
+      <para>Výsledné obrázky mohou být interaktivní a dynamické. Animace lze
+      definovat a spouštět deklarativně pomocí speciálních SVG elementů nebo
+      skriptováním. Skriptovacím jazykům jsou zpřístupněny všechny elementy,
+      atributy a vlastnosti přes SVG <emphasis>Document Object
+      Model</emphasis> (DOM). K libovolným grafickým objektům lze přiřadit
+      různé ovladače událostí, jako onmouseover, onclick.<footnote>
+          <para>Při najetí myši, při kliknutí myši.</para>
+        </footnote></para>
+
+      <para>Dále je možné SVG vkládat do jiných XML formátů, k tomu se využívá
+      technologie jmenných prostorů (<emphasis>namespace</emphasis>).
+      Zajištěna je i kompatibilita v tom smyslu, že skriptování lze provádět
+      zároveň například na XHTML (<emphasis>Extensible HyperText Markup
+      Language</emphasis>) webové stránce, do které byly vloženy elementy SVG.
+      Podobně snadné je využití kaskádových stylů (<emphasis>Cascading Style
+      Sheets</emphasis>, CSS) pro popis vzhledu jednotlivých objektů.</para>
+
+      <bridgehead>Elementy použité ve výstupu aplikace</bridgehead>
+
+      <para>Následuje stručná charakteristika SVG elementů, které využívá
+      aplikace pro grafickou prezentaci schématu. U elementů jsou dále uvedeny
+      i některé důležité atributy. Vedle nich jsou ještě potřeba běžné
+      atributy: <property>id</property> pro jednoznačnou identifikaci elementu
+      v rámci dokumentu a <property>class</property> pro zařazení elementu do
+      určité skupiny, které pak lze například přiřadit styl. Ukázku
+      konkrétního použití naleznete v příloze <xref
+      linkend="EXAMPLES-SVG-XML" />.</para>
+
+      <section>
+        <title><sgmltag>&lt;svg&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/struct.html#NewDocument">http://www.w3.org/TR/SVG11/struct.html#NewDocument</ulink></para>
+          </footnote></title>
+
+        <para>Fragment SVG dokumentu se skládá z libovolného počtu SVG
+        elementů obalených tagem <sgmltag>&lt;svg&gt;</sgmltag>. V našem
+        případě nepůjde o fragment, ale o samostatný dokument, jehož kořenovým
+        elementem bude <sgmltag>&lt;svg&gt;</sgmltag>. Krom obvyklých atributů
+        (<property>id</property>, <property>class</property>) zde
+        budou:</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para><property>xmlns</property> – deklarace jmenných
+            prostorů,</para>
+          </listitem>
+
+          <listitem>
+            <para><property>onload</property> – spustí skript při nahrání
+            tohoto elementu.</para>
+          </listitem>
+        </itemizedlist>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;title&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/struct.html#DescriptionAndTitleElements">http://www.w3.org/TR/SVG11/struct.html#DescriptionAndTitleElements</ulink></para>
+          </footnote></title>
+
+        <para>Titulek, krátký popisek může být přidán každému kontejneru nebo
+        grafickému elementu. Nebude přímo renderován, může být ale zobrazen
+        jako <emphasis>tooltip</emphasis>. Titulek přidaný
+        <sgmltag>&lt;svg&gt;</sgmltag> elementu zobrazí prohlížeč v záhlaví
+        okna.</para>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;script&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/script.html#ScriptElement">http://www.w3.org/TR/SVG11/script.html#ScriptElement</ulink></para>
+          </footnote></title>
+
+        <para>Slouží pro vložení skriptu, bude zařazen jako dítě
+        <sgmltag>&lt;svg&gt;</sgmltag> elementu. Samotný skript je třeba
+        obalit sekcí <sgmltag>&lt;![CDATA[</sgmltag><emphasis> skript
+        </emphasis><sgmltag>]]&gt;</sgmltag>, aby interpret chápal obsah pouze
+        jako text a nehledal v něm značky.</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para>Atribut <property>type</property> – určuje skriptovací
+            jazyk, hodnotou je MIME typ, v případě ECMAScriptu
+            <literal>text/ecmascript</literal>.</para>
+          </listitem>
+        </itemizedlist>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;defs&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/struct.html#DefsElement">http://www.w3.org/TR/SVG11/struct.html#DefsElement</ulink></para>
+          </footnote></title>
+
+        <para>Obsahuje elementy, na které je v dokumentu odkazováno. Obsah
+        může být stejný jako u kontejneru <sgmltag>&lt;g&gt;</sgmltag>, rozdíl
+        spočívá v tom, že grafické objekty zde uvedené nebudou přímo
+        renderovány. Do definic ve výstupu aplikace zahrneme styl
+        <sgmltag>&lt;style&gt;</sgmltag> a často využívané symboly
+        <sgmltag>&lt;symbol&gt;</sgmltag>.</para>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;style&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/styling.html#StyleElement">http://www.w3.org/TR/SVG11/styling.html#StyleElement</ulink></para>
+          </footnote></title>
+
+        <para>Slouží pro vložení stylu, popisujícího grafickou úpravu objektů
+        a jejich skupin. Opět bude vhodné styl obalit sekcí
+        <sgmltag>&lt;![CDATA[</sgmltag><emphasis> styl
+        </emphasis><sgmltag>]]&gt;</sgmltag>.<itemizedlist spacing="compact">
+            <listitem>
+              <para>Atribut <property>type</property> – určuje jazyk stylu,
+              hodnotou je MIME typ,<footnote>
+                  <para>RFC specifikace 2045: <emphasis>Multipurpose Internet
+                  Mail Extensions</emphasis>. <ulink
+                  url="http://www.ietf.org/rfc/rfc2045.txt">http://www.ietf.org/rfc/rfc2045.txt</ulink></para>
+                </footnote> v případě kaskádového stylu
+              <literal>text/css</literal>.</para>
+            </listitem>
+          </itemizedlist></para>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;symbol&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/struct.html#SymbolElement">http://www.w3.org/TR/SVG11/struct.html#SymbolElement</ulink></para>
+          </footnote></title>
+
+        <para>Symbol definuje grafický vzor, který se nerenderuje, dokud není
+        použit v SVG dokumentu elementem <sgmltag>&lt;use&gt;</sgmltag>.
+        Definovat symboly má smysl u často používaných objektů. V této
+        aplikaci to budou zatím dva – <emphasis>plus</emphasis> a
+        <emphasis>minus</emphasis> pro rozevírání a skrývání podstromu
+        grafických symbolů (boxů). Využijeme pouze běžné atributy.</para>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;use&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/struct.html#UseElement">http://www.w3.org/TR/SVG11/struct.html#UseElement</ulink></para>
+          </footnote></title>
+
+        <para>Odkazuje na jiný element a signalizuje, že jeho grafický obsah
+        má být zahrnut a vykreslen v místě, kde je element
+        <sgmltag>&lt;use&gt;</sgmltag> uveden. Může se jednat o grafické
+        elementy, <sgmltag>&lt;g&gt;</sgmltag>,
+        <sgmltag>&lt;svg&gt;</sgmltag>, <sgmltag>&lt;use&gt;</sgmltag> a (v
+        našem případě pouze) <sgmltag>&lt;symbol&gt;</sgmltag>. Kromě
+        obvyklých atributů zde využijeme:</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para><property>x</property> – určuje souřadnici na ose X, kde
+            bude umístěn odkazovaný objekt,</para>
+          </listitem>
+
+          <listitem>
+            <para><property>y</property> – určuje souřadnici na ose Y, kde
+            bude umístěn odkazovaný objekt,</para>
+          </listitem>
+
+          <listitem>
+            <para><property>xlink:href</property> – URI odkaz na objekt,
+            realizováno pomocí identifikátoru,</para>
+          </listitem>
+
+          <listitem>
+            <para><property>onclick</property> – spouští skript při kliknutí
+            na grafický objekt, tím bude symbol <emphasis>plus</emphasis> nebo
+            <emphasis>minus</emphasis>. Skript provede rozbalení nebo skrytí
+            podstromu grafických symbolů (boxů).</para>
+          </listitem>
+        </itemizedlist>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;g&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/struct.html#Groups">http://www.w3.org/TR/SVG11/struct.html#Groups</ulink></para>
+          </footnote></title>
+
+        <para>Představuje kontejner pro seskupení souvisejících grafických
+        elementů. Použijeme ho pro sdružení SVG elementů tvořících konkrétní
+        grafický symbol komponenty schématu (box).</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para>Atribut <property>transform</property> – pro určení grafické
+            transformace obsahu. Grafiku lze posouvat, škálovat, otáčet a
+            zešikmit. My budeme pouze posouvat boxy o <emphasis>x</emphasis>
+            jednotek po ose X a o <emphasis>y</emphasis> jednotek po ose Y
+            pomocí <property>transform</property> =
+            <function>translate</function>(<parameter>x</parameter>,
+            <parameter>y</parameter>).</para>
+          </listitem>
+        </itemizedlist>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;text&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/text.html#TextElement">http://www.w3.org/TR/SVG11/text.html#TextElement</ulink></para>
+          </footnote></title>
+
+        <para>Definuje textový grafický element. Ten je renderován stejnými
+        metodami jako ostatní grafické elementy. Bude sloužit ke zobrazení
+        různých názvů, vlastností a popisků v boxech. Budeme potřebovat
+        atributy:</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para><property>x</property> – reprezentuje absolutní pozici
+            textu, počítanou od prvního znaku, na ose X. Také je možné uvést
+            více (<emphasis>n</emphasis>) hodnot, které pak reprezentují
+            pozice prvních <emphasis>n</emphasis> znaků.</para>
+          </listitem>
+
+          <listitem>
+            <para><property>y</property> – reprezentuje absolutní pozici
+            textu, počítanou od prvního znaku, na ose Y. I zde můžete uvést
+            více hodnot, oddělených mezerou nebo čárkou, s významem jako u
+            atributu <property>x</property>.</para>
+          </listitem>
+
+          <listitem>
+            <para><property>visibility</property> – určuje, jestli bude text
+            viditelný, skrýtý, nebo zdědí viditelnost po svém rodiči. Tento
+            atribut bude třeba pro skrývání a odkrývání některých popisků
+            symbolů komponent schématu.</para>
+          </listitem>
+        </itemizedlist>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;line&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/shapes.html#LineElement">http://www.w3.org/TR/SVG11/shapes.html#LineElement</ulink></para>
+          </footnote></title>
+
+        <para>Definuje úsečku. Pomocí úseček a křivek budou propojeny
+        jednotlivé grafické symboly (boxy), Z úseček budou složeny i další
+        prvky. Použijeme atributy:</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para><property>x1</property> – souřadnice začátku úsečky na ose
+            X,</para>
+          </listitem>
+
+          <listitem>
+            <para><property>y1</property> – souřadnice začátku úsečky na ose
+            Y,</para>
+          </listitem>
+
+          <listitem>
+            <para><property>x2</property> – souřadnice konce úsečky na ose
+            X,</para>
+          </listitem>
+
+          <listitem>
+            <para><property>y2</property> – souřadnice konce úsečky na ose
+            Y.</para>
+          </listitem>
+        </itemizedlist>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;polyline&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/shapes.html#PolylineElement">http://www.w3.org/TR/SVG11/shapes.html#PolylineElement</ulink></para>
+          </footnote></title>
+
+        <para>Definuje množinu propojených úseček, typicky tvoří neuzavřené
+        tvary. Element <sgmltag>&lt;polyline&gt;</sgmltag> použijeme pouze v
+        některých grafických symbolech komponent schématu.</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para>Atribut <property>points</property> – seznam párů souřadnic
+            podle os X a Y, začátky a konce úseček, z nichž se skládá tento
+            útvar.</para>
+          </listitem>
+        </itemizedlist>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;polygon&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/shapes.html#PolygonElement">http://www.w3.org/TR/SVG11/shapes.html#PolygonElement</ulink></para>
+          </footnote></title>
+
+        <para>Definuje uzavřený tvar, skládající se z množiny propojených
+        úseček. Element <sgmltag>&lt;polygon&gt;</sgmltag> použijeme pouze v
+        některých grafických symbolech komponent schématu.</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para>Atribut <property>points</property> – seznam párů souřadnic
+            podle os X a Y, tvořících polygon.</para>
+          </listitem>
+        </itemizedlist>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;rect&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/shapes.html#RectElement">http://www.w3.org/TR/SVG11/shapes.html#RectElement</ulink></para>
+          </footnote></title>
+
+        <para>Definuje obdélník. Ten poslouží k vykreslení boxů, jejich stínů
+        a dalších grafických prvků. Pro klasifikaci použijeme atribut
+        <property>class</property>, dále:</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para><property>x</property> – souřadnice strany obdélníku podle
+            osy X, té strany, jejíž souřadnice má nižší hodnotu v uživatelském
+            souřadnicovém systému (většinou jde o levou stranu).</para>
+          </listitem>
+
+          <listitem>
+            <para><property>y</property> – souřadnice strany obdélníku podle
+            osy Y, strana je určena analogicky jako u atributu
+            <property>x</property>, většinou jde o horní stranu.</para>
+          </listitem>
+
+          <listitem>
+            <para><property>width</property> – šířka obdélníku,</para>
+          </listitem>
+
+          <listitem>
+            <para><property>height</property> – výška obdélníku,</para>
+          </listitem>
+
+          <listitem>
+            <para><property>rx</property> – poloměr elipsy, jež tvoří zaoblené
+            rohy obdélníku, podle osy X.</para>
+          </listitem>
+
+          <listitem>
+            <para><property>onclick</property> – stejný význam jako u elementu
+            <sgmltag>&lt;use&gt;</sgmltag>, atribut bude nastaven u
+            obdélníkových ovládacích tlačítek.</para>
+          </listitem>
+        </itemizedlist>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;circle&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/shapes.html#CircleElement">http://www.w3.org/TR/SVG11/shapes.html#CircleElement</ulink></para>
+          </footnote></title>
+
+        <para>Definuje kružnici, kruh. Ty ve výstupu aplikace poslouží pouze
+        jako dodatečné grafické prvky. Použijeme atributy:</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para><property>cx</property> – souřadnice středu kruhu na ose
+            X,</para>
+          </listitem>
+
+          <listitem>
+            <para><property>cy</property> – souřadnice středu kruhu na ose
+            Y,</para>
+          </listitem>
+
+          <listitem>
+            <para><property>r</property> – poloměr.</para>
+          </listitem>
+        </itemizedlist>
+      </section>
+
+      <section>
+        <title><sgmltag>&lt;path&gt;</sgmltag><footnote>
+            <para><xref linkend="SVG" /> <ulink
+            url="http://www.w3.org/TR/SVG11/paths.html#PathElement">http://www.w3.org/TR/SVG11/paths.html#PathElement</ulink></para>
+          </footnote></title>
+
+        <para>Reprezentuje obrys tvaru. Může být vyplněn, obtažen nebo sloužit
+        jako cesta, podle které budou ořezávány jiné objekty. V této aplikaci
+        bude sloužit jako koncová část propojení boxů.</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para>Atribut <property>d</property> – definice obrysu tvaru.
+            Obecně je tvořená příkazy <emphasis>moveto</emphasis>,
+            <emphasis>lineto</emphasis>, <emphasis>curveto</emphasis>,
+            <emphasis>arc</emphasis> a <emphasis>closepath</emphasis>, buď
+            absolutními, nebo relativními.<footnote>
+                <para>Přesun kurzoru na zadanou pozici bez kreslení čáry; s
+                vykreslením úsečky; s vykreslením podrobněji stanovené křivky;
+                s vykreslením oblouku; s vykreslením úsečky vedoucí k
+                počátečnímu bodu tak, aby vznikl uzavřený tvar.</para>
+              </footnote> K příkazům se dále zadávají páry souřadnic podle os
+            X a Y.</para>
+          </listitem>
+        </itemizedlist>
+      </section>
+    </section>
+
+    <section>
+      <title>ECMAScript</title>
+
+      <para>ECMAScript je skriptovací jazyk, standardizovaný organizací
+      <emphasis>Ecma International</emphasis> ve specifikaci
+      <emphasis>ECMA-262</emphasis>.<footnote>
+          <para>Ecma International: <emphasis>Standard ECMA-262</emphasis>.
+          ECMAScript Language Specification 3rd edition (December 1999).
+          <ulink
+          url="http://www.ecma-international.org/publications/standards/Ecma-262.htm">http://www.ecma-international.org/publications/standards/Ecma-262.htm</ulink></para>
+        </footnote> Je široce používán na webu a bývá často označován jako
+      <emphasis>JavaScript</emphasis> nebo <emphasis>JScript</emphasis>, podle
+      hlavních dialektů tohoto jazyka. Syntaxe se záměrně podobá syntaxi
+      <emphasis>Javy</emphasis>, ale je uvolněnější, aby se docílilo snazšího
+      použití, například není třeba deklarovat typ proměnných. Zároveň však
+      tento přístup zvyšuje pravděpodobnost výskytu chyby.</para>
+
+      <para>ECMAScript je objektově orientovaný programovací jazyk pro
+      provádění výpočtů a manipulaci s objekty <emphasis>v hostitelském
+      prostředí</emphasis>. Nefunguje tedy samostatně, vstup a výstup dat a
+      zpracovávané objekty poskytuje jiný, existující systém, jehož možnosti
+      jsou rozšiřovány skriptováním. To je podstatou skriptovacích jazyků.
+      <emphasis>V této aplikaci bude skript sloužit k zajištění interaktivity
+      SVG modelu schématu v prostředí prohlížeče.</emphasis> Konkrétnější
+      informace jsou v oddílu <xref linkend="INTERACTIVITY" />.</para>
+
+      <para>ECMAScript byl původně vyvíjen pro web za účelem oživení webových
+      stránek a přenesení části výkonu na klienta – prohlížeč – v
+      klient-server architektuře. Pokud se jedná o HTML (<emphasis>HyperText
+      Markup Language</emphasis>) stránku, poskytne prohlížeč objekty
+      reprezentující okna, menu, dialogové boxy, textové oblasti, odkazy, rámy
+      a další. Dále poskytne způsoby, jak spustit skriptovací kód při
+      událostech, například nahrávání stránky, změna velikosti okna, pohyb
+      myši, kliknutí.</para>
+
+      <para>My však nepotřebujeme speciální prvky jazyka HTML, ale rozhraní k
+      SVG nebo obecně XML objektům. Obecné rozhraní je standardizováno v další
+      specifikaci konsorcia W3C, nazývá se DOM (<emphasis>Document Object
+      Model</emphasis>).<footnote>
+          <para>W3C: <emphasis>Document Object Model (DOM)</emphasis>. <ulink
+          url="http://www.w3.org/DOM/">http://www.w3.org/DOM/</ulink></para>
+        </footnote> DOM existuje v několika úrovních – level 1 až 3. V této
+      aplikaci by stačila úroveň druhá. Pro programovou manipulaci s objekty
+      škálovatelné grafiky vznikl speciální SVG DOM. Ten je součástí
+      specifikace SVG<footnote>
+          <para><xref linkend="SVG" /> Appendix B: SVG Document Object Model
+          (DOM). <ulink
+          url="http://www.w3.org/TR/SVG/svgdom.html">http://www.w3.org/TR/SVG/svgdom.html</ulink></para>
+        </footnote> a dále rozšiřuje DOM Level 2. SVG DOM bychom mohli dobře
+      využít, ale museli bychom se pak potýkat s nekompatibilitou některých
+      prohlížečů. Nakonec proto zůstaneme u základního DOM úrovně 2, který je
+      více rozšířen. Budeme potřebovat metody a atributy blíže popsané v <xref
+      linkend="DOM1" /> a <xref linkend="DOM2" />, jejich konkrétní uplatnění
+      je ukázáno na příkladu <xref linkend="EXAMPLES-SVG-XML" />:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para><interface>Document</interface>:
+          <interface>Element</interface>
+          <methodname>getElementById</methodname>(in
+          <interface>DOMString</interface> <parameter>elementId</parameter>);
+          pro získání elementu podle jeho identifikátoru, který je uveden v
+          atributu <property>id</property>.</para>
+        </listitem>
+
+        <listitem>
+          <para><interface>Document</interface>:
+          <interface>NodeList</interface>
+          <methodname>getElementsByTagName</methodname>(in
+          <interface>DOMString</interface> <parameter>tagname</parameter>);
+          pro získání seznamu uzlů se zadaným jménem tagu.</para>
+        </listitem>
+
+        <listitem>
+          <para><interface>Node</interface>: <literal>readonly</literal>
+          <literal>attribute</literal> <interface>NodeList</interface>
+          <property>childNodes</property>; obsahuje seznam všech dětí daného
+          uzlu.</para>
+        </listitem>
+
+        <listitem>
+          <para><interface>Element</interface>:
+          <interface>DOMString</interface>
+          <methodname>getAttribute</methodname>(in
+          <interface>DOMString</interface> <parameter>name</parameter>); pro
+          získání hodnoty atributu se zadaným názvem.</para>
+        </listitem>
+
+        <listitem>
+          <para><interface>Element</interface>: <literal>void</literal>
+          <methodname>setAttribute</methodname>(in
+          <interface>DOMString</interface> <parameter>name</parameter>, in
+          <interface>DOMString</interface> <parameter>value</parameter>);
+          slouží k nastavení hodnoty atributu s daným názvem nebo k vytvoření
+          nového atributu tohoto uzlu se zadaným názvem a hodnotou.</para>
+        </listitem>
+
+        <listitem>
+          <para><interface>Element</interface>:
+          <interface>DOMString</interface>
+          <methodname>getAttributeNS</methodname>(in
+          <interface>DOMString</interface>
+          <parameter>namespaceURI</parameter>, in
+          <interface>DOMString</interface> <parameter>localName</parameter>);
+          slouží k získání hodnoty atributu s daným lokálním jménem a jmenným
+          prostorem.</para>
+        </listitem>
+
+        <listitem>
+          <para><interface>Element</interface>: <literal>void</literal>
+          <methodname>setAttributeNS</methodname>(in
+          <interface>DOMString</interface>
+          <parameter>namespaceURI</parameter>, in
+          <interface>DOMString</interface>
+          <parameter>qualifiedName</parameter>, in
+          <interface>DOMString</interface> <parameter>value</parameter>);
+          slouží k nastavení hodnoty atributu s daným názvem a v daném jmenném
+          prostoru nebo k vytvoření nového atributu tohoto uzlu se zadaným
+          názvem a hodnotou, v daném jmenném prostoru.</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title>CSS</title>
+
+      <para>CSS, <emphasis>Cascading Style Sheets</emphasis>, kaskádové styly
+      jsou opět výsledkem aktivity organizace W3C.<footnote>
+          <para>W3C: <emphasis>Cascading Style Sheets</emphasis>. Home page.
+          <ulink
+          url="http://www.w3.org/Style/CSS/">http://www.w3.org/Style/CSS/</ulink></para>
+        </footnote> Specifikace definuje jazyk pro popis stylů, který umožňuje
+      tvůrcům i uživatelům připojit styl (například fonty a odsazení)
+      strukturovaným dokumentům, jako jsou HTML dokumenty a aplikace XML. Lze
+      tak docílit oddělení definice vzhledu dokumentu od jeho obsahu a
+      zjednodušit tvorbu webu i jeho správu.</para>
+
+      <para>Jazyk CSS je navržen tak, aby byl snadno čitelný pro člověka,
+      stylový předpis je vyjádřen v terminologii, jež je běžná v DTP. Jednou
+      ze základních vlastností je, že styl je <emphasis>kaskádový</emphasis>.
+      To znamená, že se na sebe může vrstvit více definic stylu, ale platí
+      pouze ta poslední. Tvůrce připojí k dokumentu preferovaný styl, ale
+      uživatel ho může překrýt svým vlastním, přizpůsobeným lidskému nebo
+      technologickému handicapu <xref linkend="CSS" />.</para>
+
+      <para>Předpis se skládá z jednotlivých <emphasis>pravidel</emphasis>.
+      Každé pravidlo pak určuje vzhled jednoho nebo více elementů – těch
+      elementů, které jsou vybrány <emphasis>selektorem</emphasis>, první
+      částí pravidla. Za selektorem následuje seznam deklarací uzavřených
+      složenými závorkami, jednotlivé deklarace jsou odděleny středníkem.
+      Každá deklarace je tvořena <emphasis>vlastností</emphasis> (následuje
+      dvojtečka) a <emphasis>hodnotou</emphasis> vlastnosti. Selektor může
+      vybrat všechny elementy s určitým názvem nebo elementy obsahující zadané
+      atributy, může je označovat podle toho, kde jsou umístěny vzhledem k
+      jiným elementům a vybírat podle <emphasis>pseudotříd</emphasis>
+      (<literal>:hover</literal>) a <emphasis>pseudoelementů</emphasis>
+      (<literal>:first-line</literal>). Pokud lze aplikovat na určitý element
+      více pravidel, použije se to s větší prioritou. Zjednodušeně se jedná o
+      pravidlo s konkrétnějším selektorem.</para>
+
+      <para><emphasis>Kaskádový styl, který použijeme pro SVG výstup této
+      aplikace, umožní snadnou dodatečnou manipulaci se vzhledem jednotlivých
+      tříd grafických prvků</emphasis>, blíže v oddílu <xref
+      linkend="STYLE" />.</para>
+    </section>
+
+    <section>
+      <title>Java</title>
+
+      <para>Java je objektově orientovaný programovací jazyk pro všeobecné
+      použití. Byl vyvinut společností <emphasis>Sun Microsystems</emphasis> a
+      po svém představení v roce 1995 se stal jedním z nejpoužívanějších
+      programovacích jazyků. Od května roku 2007 je Java vyvíjena jako open
+      source.</para>
+
+      <para>Charakteristickou vlastností je přenositelnost na různé platformy.
+      Jednou napsaný program lze spustit na libovolném podporovaném operačním
+      systému a hardwaru. Napsaný zdrojový kód se předkompiluje do takzvaného
+      <emphasis>bytecode</emphasis>, který je pro všechny platformy stejný;
+      odlišují se pouze virtuální stroje (<emphasis>Virtual
+      Machine</emphasis>). Ty bytecode interpretují, případně za běhu přeloží
+      do nativního kódu. Program je možné spustit všude, kde je odpovídající
+      běhové prostředí (<emphasis>Java Runtime Environment</emphasis>).</para>
+
+      <para>Záměrem tvůrců Javy podle <xref linkend="M254" /> bylo vytvořit
+      jazyk, který by byl:</para>
+
+      <itemizedlist spacing="compact">
+        <listitem>
+          <para><emphasis>Jednoduchý</emphasis>: Java staví na několika
+          základních konceptech, které se vývojáři snadno naučí.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>Podobný zavedeným technologiím</emphasis>: syntaxe
+          je založena na syntaxi populárního jazyka C++, je však snížena jeho
+          složitost.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>Objektově orientovaný</emphasis>: programy pracují s
+          objekty. Definují se třídy objektů, které mohou dědit od jiných
+          tříd, mohou implementovat připravená rozhraní. Objekty nebo celé
+          třídy poskytují vlastnosti (atributy) a metody. Metody je možné
+          překrývat a přetěžovat. Implementace je ukrytá; objekty poskytují
+          veřejné rozhraní umožňující manipulaci s nimi, jinak jsou
+          zapouzdřené. Jazyk je silně typový.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>Robustní</emphasis>: javové programy jsou před
+          spuštěním striktně kontrolovány, jazyk vynechává různé možnosti C a
+          C++, jež bývají náchylné k chybám.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>Bezpečný</emphasis>: Java obsahuje speciální
+          nástroje zajištění bezpečnosti, programy běžící přes síť nemohou
+          poškodit soubory v počítači nebo obsahovat viry.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>Přenositelný</emphasis>: programy mohou být snadno
+          přesunuty z jedné platformy na jinou, a to s minimálními změnami
+          nebo beze změn.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>Vysoce výkonný</emphasis>: javové programy běží
+          dostatečně rychle vzhledem k požadovaným účelům.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>Interpretovaný</emphasis>: souvicí s
+          přenositelností, viz výše.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>Užívající programová vlákna</emphasis>: to umožňuje
+          programu vykonávat několik úkolů naráz a zvětšit tak výkon.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>Dynamický</emphasis>: programy se mohou
+          přizpůsobovat změnám prostředí i za jejich běhu.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para><emphasis>Javu jsem pro tuto aplikaci zvolil hlavně kvůli
+      přenositelnosti a velkému rozšíření, tento jazyk je mi blízký také díky
+      kurzům absolvovaným na VŠE.</emphasis></para>
+    </section>
+  </chapter>
+
+  <chapter>
+    <title>Možnosti načtení a interpretace modelu XML schématu</title>
+
+    <para>V předchozí kapitole jsem stručně popsal technologie užité v
+    aplikaci pro interaktivní vizualizaci schémat. Teď bude třeba rozhodnout
+    se, jak schéma otevřít, načíst ho do paměti, interpretovat a zpracovat. Na
+    XML schéma lze nahlížet z několika úrovní:</para>
+
+    <bridgehead>Obyčejný textový soubor</bridgehead>
+
+    <para>Pokud bychom schéma chápali pouze jako textový soubor, museli bychom
+    naprogramovat kompletní způsob interpretace značkování, aby pak šlo s
+    výsledkem pracovat jako s XML dokumentem. Toto naštěstí už dávno řeší
+    standardizovaná rozhraní jako SAX (<emphasis>Simple API for
+    XML</emphasis>) a DOM (<emphasis>Document Object Model</emphasis>).</para>
+
+    <bridgehead>XML dokument</bridgehead>
+
+    <para>Dokument by stačilo načítat pomocí SAXu a přitom vyhledávat typické
+    struktury tvořené převážně názvy elementů a hodnotami atributů, důležité
+    pro interpretaci schématu. Tyto struktury by byly reprezentovány jako
+    objekty a jejich vlastnosti, a to buď tak aby tyto objekty vyhovovaly
+    svému účelu – chceme pouze vizualizovat schéma –, nebo aby odpovídaly
+    specifikaci. Shoda se specifikací zajišťuje kompatibilitu, funkčnost a
+    ulehčuje práci v případě změn. Po přečtení souboru je však ještě třeba
+    řešit další úlohy, mezi které patří:</para>
+
+    <itemizedlist spacing="compact">
+      <listitem>
+        <para>Načtení importovaných, vložených a předefinovávaných schémat a
+        zajištění, aby přitom nedošlo k zacyklení.</para>
+      </listitem>
+
+      <listitem>
+        <para>Vložení typů, které jsou podle specifikace zabudované jako
+        součást schématu.</para>
+      </listitem>
+
+      <listitem>
+        <para>Musí se řešit redefinice datových typů, skupin elementů a skupin
+        atributů.</para>
+      </listitem>
+
+      <listitem>
+        <para>Je třeba poskládat reference na globálně definované typy,
+        primární a unikátní klíče, globálně deklarované elementy a atributy,
+        globálně definované skupiny elementů a atributů.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>I v této oblasti však existují hotové implementace, kterým stačí
+    zadat vstupní soubor, nastavit je několika parametry a nechat načíst
+    schéma. Některou z nich určitě využijeme (viz <xref linkend="XSD-API" />),
+    ušetří to hodně práce. Nakonec tedy budeme pracovat s nejvyšší úrovní, s
+    abstraktním datovým modelem.</para>
+
+    <bridgehead>Abstraktní datový model</bridgehead>
+
+    <para>S interpretací schématu podle <xref linkend="XSD1" /> získáme
+    jednoduchý přístup ke všem komponentám a vlastnostem. Bližší popis
+    zpracování je v kapitole <xref linkend="XSD-PROCESSING" />.</para>
+
+    <section id="XSD-API">
+      <title>Výběr vhodné implementace XML schématu</title>
+
+      <para>Nejlepší variantou bude vyhledat přijatelnou open source
+      implementaci vyhovující specifikaci a naučit se s ní zacházet. Následuje
+      popis čtyř známých otevřených aplikací, které se schématem pracují, a
+      výběr jedné z nich.</para>
+
+      <section>
+        <title>Eclipse: Model Development Tools – XSD<footnote>
+            <para>Eclipse Modeling: <emphasis>Model Development Tools
+            (MDT)</emphasis>. <ulink
+            url="http://www.eclipse.org/modeling/mdt/?project=xsd#xsd">http://www.eclipse.org/modeling/mdt/?project=xsd#xsd</ulink></para>
+          </footnote></title>
+
+        <para><emphasis>Model Development Tools</emphasis> (MDT) tvoří součást
+        projektu organizace <emphasis>Eclipse</emphasis>, který je zaměřen na
+        rozvoj a propagaci technologií pro vývoj založený na modelech –
+        Eclipse Modeling Project. Eclipse poskytuje řadu frameworků, nástrojů
+        a implementací technologických standardů. MDT konkrétně má nabídnout
+        implementaci standardních metamodelů a ukázkové nástroje pro vývoj
+        modelů, postavených na těchto metamodelech. Součástmi MDT jsou:</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para>Business Process Model and Notation (BPMN2),</para>
+          </listitem>
+
+          <listitem>
+            <para>Ontology Definition Metamodel (EODM),</para>
+          </listitem>
+
+          <listitem>
+            <para>Information Management Metamodel (IMM),</para>
+          </listitem>
+
+          <listitem>
+            <para>Object Constraint Language (OCL),</para>
+          </listitem>
+
+          <listitem>
+            <para>Semantics of Business Vocabulary and Business Rules
+            (SBVR),</para>
+          </listitem>
+
+          <listitem>
+            <para>Unified Modeling Language (UML2),</para>
+          </listitem>
+
+          <listitem>
+            <para>UML2 Tools,</para>
+          </listitem>
+
+          <listitem>
+            <para>XML Schema Infoset Model (XSD).</para>
+          </listitem>
+        </itemizedlist>
+
+        <para><emphasis>XML Schema Infoset Model</emphasis> je knihovna, která
+        poskytuje rozhraní pro aplikace, jež prohledávají, tvoří nebo
+        modifikují W3C XML schémata. Pro manipulaci s komponentami je možné
+        využít rozhraní popsáné ve specifikaci, ale stejně tak lze pracovat s
+        DOM reprezentací schématu. Při modifikacích se mění obě reprezentace
+        odpovídajícím způsobem. Knihovna zahrnuje i služby pro serializaci a
+        deserializaci schémat. <emphasis>Cílem projektu je zcela obsáhnout
+        funkcionalitu reprezentace XML schématu</emphasis>, není ale nutné
+        poskytnout validační služby, obvyklé u validujících parserů
+        (Xerces-J).</para>
+      </section>
+
+      <section>
+        <title>Apache: Xerces2 Java Parser – XML Schema<footnote>
+            <para>The Apache XML Project: <emphasis>Xerces2 Java Parser
+            Readme</emphasis>. <ulink
+            url="http://xerces.apache.org/xerces2-j/xml-schema.html">http://xerces.apache.org/xerces2-j/</ulink></para>
+          </footnote></title>
+
+        <para><emphasis>Xerces2</emphasis> je open source XML parser vyvinutý
+        organizací <emphasis>Apache</emphasis>, jeho výhodou je vysoký výkon a
+        shoda se standardy. Krom jiného zahrnuje Xerces Native Interface,
+        framework pro stavbu komponent a konfigurací parserů.</para>
+
+        <para>Xerces dokáže parsovat dokumenty napsané podle doporučení XML
+        1.1 a správně pracuje také se jmennými prostory podle specifikace XML
+        Namespaces 1.1. Dále poskytuje kompletní implementaci DOM Level 3
+        Core, Load and Save, implementuje XML Inclusions (jsou to doporučení
+        W3C) a poskytuje podporu pro OASIS XML Catalogs v1.1.</para>
+
+        <para><emphasis>Xerces2 je také XML schéma procesor, který až na pár
+        drobných výjimek plně vyhovuje specifikaci <xref linkend="XSD1" /> a
+        <xref linkend="XSD2" /></emphasis>.</para>
+      </section>
+
+      <section>
+        <title>Saxonica: Saxon<footnote>
+            <para><emphasis>Saxon, The XSLT andXQuery Processor</emphasis>.
+            <ulink
+            url="http://saxon.sourceforge.net">http://saxon.sourceforge.net</ulink></para>
+          </footnote></title>
+
+        <para><emphasis>Saxon</emphasis> je kompletní implementace XSLT 2.0,
+        XQuery 1.0 a XPath 2.0 doporučení konsorcia W3C. Je zveřejňován
+        společností <emphasis>Saxonica</emphasis>, a to zároveň pro platformu
+        Java a .NET. Vydává se ve dvou verzích: Saxon-B je open source
+        produkt, implementuje XSLT 2.0 a XQuery tak, že vyhovuje specifikacím
+        pouze v základní úrovni požadavků. Saxon-SA je produkt komerční,
+        umožňuje však aplikovat XSLT a XQuery s využitím schémat. Lze tedy
+        importovat schéma a validovat oproti němu vstup nebo výstup a vybírat
+        položky podle jejich typu. Saxon-SA obsahuje také samostatný XML
+        schéma validátor a další rozšíření oproti produktu Saxon-B.</para>
+
+        <para><emphasis>Bohužel v open source verzi není rozhraní pro přístup
+        ke komponentám XML schématu a proto Saxon nemůžeme
+        použít.</emphasis></para>
+      </section>
+
+      <section>
+        <title>ExoLab: Castor – Source Generator XML Schema Support<footnote>
+            <para><emphasis>The Castor Project</emphasis>.
+            http://www.castor.org/xmlschema.html</para>
+          </footnote></title>
+
+        <para><emphasis>Castor</emphasis> je open source framework pro Javu,
+        slouží pro data binding, převod dat mezi objekty Javy, XML dokumenty a
+        relačními tabulkami.</para>
+
+        <para>Součástí je mimo jiné i XML Source Code Generator. Ten vytváří
+        javové třídy, reprezentující objektový model podle vstupního XML
+        schématu. Castor proto podporuje specifikaci W3C XML Schema <xref
+        linkend="XSD1" />, <xref linkend="XSD2" />. Objektový model
+        reprezentuje XML schéma v paměti počítače, zatímco generátor
+        zdrojového kódu převádí datové typy a struktury schématu do
+        odpovídajících typů a struktur Javy. <emphasis>Objektový model
+        schématu dokáže číst i zapisovat dokumenty a manipulovat s nimi.
+        Vyhovuje specifikaci bez omezení.</emphasis> Generátor kódu zatím
+        nenabízí mapování pro všechny komponenty.</para>
+      </section>
+
+      <section>
+        <title>Volba Xerces2</title>
+
+        <para>Z popsaných implementací nemůžeme použít Saxon, ostatní se zdají
+        rovnocenné a plně vyhovují specifikaci. Nakonec jsem vybral XML schéma
+        procesor, který je součástí parseru <emphasis>Xerces2-J</emphasis>. Je
+        jednoduchý a poskytuje přesně ty možnosti, které budeme potřebovat.
+        Třídy reprezentující jednotlivé komponenty obsahují metody pro přístup
+        k vlastnostem, jak jsou definovány ve specifikaci. Modifikace
+        vlastností není podporována a my bychom ji stejně nevyužili. Snadné je
+        také ovládání procesoru, načtení schématu a jeho zpracování, použití
+        je dobře dokumentováno. Krom toho je Xerces využíván pro účely
+        vizualizace schématu ve známém XML editoru oXygen. Eclipse MDT a
+        Castor by posloužili stejně dobře, jejich funkcionalita je však
+        zbytečně široká (práce s DOM stromem, tvorba a modifikace
+        schémat).</para>
+      </section>
+    </section>
+  </chapter>
+
+  <chapter>
+    <title>Návrh grafického modelu</title>
+
+    <para>Předtím, než začnu programovat aplikaci, která bude generovat
+    grafickou reprezentaci XML schémat, musím navrhnout, jak by tato
+    reprezentace měla vypadat. Budu se muset rozhodnout pro správný typ
+    modelu, navrhnout symboly – prvky modelu – a jejich propojení, budu se
+    zabývat interaktivitou výsledného modelu. To vše je předmětem této
+    kapitoly.</para>
+
+    <section>
+      <title>Dva typy modelů</title>
+
+      <para>Existují dva základní způsoby, jak zobrazit XML schéma. Oba
+      samozřejmě vycházejí ze stromové struktury XML dokumentů, liší se ale
+      svou podrobností a zamýšleným účelem použití. Rozdíl ukážu na výstupech
+      aplikace <emphasis>oXygen</emphasis>,<footnote>
+          <para>Oxygen XML editor, oficiální stránky. <ulink
+          url="http://www.oxygenxml.com">http://www.oxygenxml.com</ulink></para>
+        </footnote> která nabízí vykreslení obou typů.</para>
+
+      <para>Jako příklad poslouží toto jednoduché XML schéma:</para>
+
+      <programlisting id="XML-MODEL">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"&gt;
+
+    &lt;xs:element name="contact" type="ContactType"/&gt;
+    
+    &lt;xs:complexType name="ContactType"&gt;
+        &lt;xs:sequence&gt;
+            &lt;xs:element name="phone" type="xs:string"/&gt;
+            &lt;xs:element name="address" type="AddressType"/&gt;
+        &lt;/xs:sequence&gt;
+    &lt;/xs:complexType&gt;
+    
+    &lt;xs:complexType name="AddressType"&gt;
+        &lt;xs:sequence&gt;
+            &lt;xs:element name="name" type="xs:string"/&gt;
+            &lt;xs:element name="street" type="xs:string"/&gt;
+            &lt;xs:element name="city" type="xs:string"/&gt;
+        &lt;/xs:sequence&gt;
+    &lt;/xs:complexType&gt;
+
+&lt;/xs:schema&gt;</programlisting>
+
+      <section>
+        <title>Úplný model</title>
+
+        <para>Úplný grafický model kopíruje XML reprezentaci schématu. Pro
+        každý element je vykreslen vlastní symbol. Krom toho je možné
+        rozevírat strom symbolů dál a podívat se, co se skrývá za odkazy na
+        globálně definované komponenty schématu, jako jsou definice typů,
+        globální deklarace elementů, jejich skupin, atd.</para>
+
+        <para>Například viz obrázek <xref linkend="FULL-MODEL" />. Za symbolem
+        elementu <literal>contact</literal> jsem rozbalil větev s definicí
+        jeho typu <literal>ContactType</literal>. Jedná se o sekvenci elementů
+        <literal>phone</literal> a <literal>address</literal>. Dalším
+        rozevíráním stromu bych se dostal na definice typů těchto elementů.
+        Stejně tak je ale mohu vidět níže jako potomky definice
+        ContactType.</para>
+
+        <para>Úplný model je velmi podrobný. Nabízí komponenty, jež je možno
+        použít při rozšiřování schématu, ale zatím nejsou aplikovatelné v
+        popisovaném dokumentu; ukazuje detailně všechna nastavení a hodnoty,
+        globální definice typů, deklarace skupin; uvádí importované a vložené
+        soubory. Je tedy určen spíše tvůrcům XML schémat a ne
+        uživatelům.</para>
+
+        <figure id="FULL-MODEL">
+          <title>Znázornění schématu úplným modelem</title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="images/model_full.png" format="PNG"
+                         scale="87" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section>
+        <title>Logický model</title>
+
+        <para>Logický grafický model oproti tomu zobrazuje pouze základní
+        informace, důležité pro tvůrce XML dokumentů, vyhovujících schématu.
+        Symbolů je podstatně méně než v případě úplného modelu. Jde o to,
+        ukázat uživateli možnou strukturu elementů a atributů. Reference na
+        globální komponenty musí být poskládány stejně jako u úplného modelu,
+        při procházení stromu ale není na první pohled patrné, ve které části
+        schématu je prvek definován.</para>
+
+        <para>Například viz obrázek <xref linkend="LOGICAL-MODEL" />.
+        Kořenovým elementem validních XML dokumentů je
+        <literal>contact</literal>. Uvnitř něj se musí objevit sekvence
+        elementů <literal>phone</literal> a <literal>address</literal>.
+        Zatímco <literal>phone</literal> obsahuje textový řetězec
+        (<emphasis>string</emphasis>), je uvnitř elementu
+        <literal>address</literal> další posloupnost, a to elementy
+        <literal>name</literal>, <literal>street</literal> a
+        <literal>city</literal>. Každý z nich je typu textový řetězec.</para>
+
+        <para>Logický model je tedy vhodný pro uživatele XML schémat,
+        usnadňuje jim pochopení definovaných struktur; ale i tvůrcům umožní
+        rychlejší kontrolu jejich práce. Právě logický model bude výstupem mé
+        aplikace, neboť cílem je vytvořit dokumentaci schématu, která bude
+        intuitivní a každý se v ní rychle vyzná. Dokumentace nebude popisovat
+        XML schéma, ale XML dokumenty schématu vyhovující; konkrétně strukturu
+        (kombinování, zanořování) elementů, jejich atributy a datové typy.
+        Elementy schématu, které nejsou nezbytné pro pochopení účelu, budou z
+        modelu vypuštěny, stejně tak komponenty, jež nejsou přímo
+        využity.</para>
+
+        <figure id="LOGICAL-MODEL">
+          <title>Znázornění schématu logickým modelem</title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="images/model_logical.png" format="PNG" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+    </section>
+
+    <section>
+      <title>Model jako stromová struktura abstraktních symbolů</title>
+
+      <para>Z uvedených ukázek a z podstaty XML dokumentů plyne, že lze
+      symboly, tvořící grafický model, chápat jako uzly stromové struktury. Na
+      základní úrovni proto bude existovat abstraktní symbol
+      (<classname>AbstractSymbol</classname>) s odkazem na svého rodiče a
+      řazeným seznamem odkazů na své děti.
+      <classname>AbstractSymbol</classname> bude poskytovat metody pro
+      získávání a nastavování těchto odkazů a dotazování na další
+      informace.</para>
+
+      <para>Dále je pro vykreslení každého symbolu třeba znát horizontální
+      (<parameter>xPosition</parameter>) a vertikální pozici
+      (<parameter>yPosition</parameter>), každý symbol má šířku a výšku.
+      <classname>AbstractSymbol</classname> definuje také metody pro nastavení
+      správné šířky a výšky a pro vykreslení symbolu. Ty musí být přepsány
+      konkrétním symbolem.</para>
+
+      <figure id="ABSTRACT-MODEL">
+        <title>Model abstraktních symbolů</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="images/abstract_symbols.png" format="PNG"
+                       scale="70" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+    </section>
+
+    <section>
+      <title>Symboly jednotlivých komponent schématu</title>
+
+      <para>Konkrétní symbol rozšiřuje vlastnosti abstraktního symbolu
+      (<classname>AbstractSymbol</classname>). Povinně přepisuje metody pro
+      nastavení správné šířky a výšky a pro vykreslení symbolu. Šířka musí být
+      nastavena s ohledem na délku textových řetězců, které se mají vejít do
+      symbolu. Při použití proporcionálních písem se toto dá řešit pouze
+      přibližně.</para>
+
+      <para>Symbol také poskytuje metody pro získávání a nastavování dále
+      popsaných parametrů. Pokud nebude některý z parametrů uveden (například
+      proto, že zastupuje volitelnou vlastnost), nebude jeho hodnota vypsána
+      nebo jinak zpracována.</para>
+
+      <para>Následuje přehled konkrétních symbolů a jejich vztahů k XML
+      schématu. V popisech parametrů vycházím z vlastností a hodnot
+      definovaných ve specifikaci <xref linkend="XSD1" />.</para>
+
+      <section id="SYMBOL-SCHEMA">
+        <title><literal>schema</literal></title>
+
+        <para><classname>SymbolSchema</classname> znázorňuje kořenový element
+        schématu.</para>
+
+        <para>Pro vykreslení není třeba uvádět žádné parametry.</para>
+
+        <figure>
+          <title>Symbol <literal>schema</literal></title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/schema.svg" format="SVG" scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="SYMBOL-ELEMENT">
+        <title><literal>element</literal></title>
+
+        <para><classname>SymbolElement</classname> zobrazuje jméno
+        informačních položek element, jejich typ a zařazení ke jmennému
+        prostoru a další vlastnosti dostupné z komponenty deklarace elementu
+        (<emphasis>Element declaration</emphasis>).</para>
+
+        <itemizedlist spacing="normal">
+          <listitem>
+            <para>Parametr <parameter>name</parameter> je textový řetězec,
+            obsahující lokální část jmen informačních položek element, jež
+            jsou validovány. Hodnotu poskytne deklarace elementu ve vlastnosti
+            <property>name</property>.</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>namespace</parameter> je řetězec se
+            jmenným prostorem. Ten kvalifikuje informační položky element.
+            Cílový jmenný prostor udává deklarace elementu ve vlastnosti
+            <property>namespace</property>.</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>type</parameter> je řetězec, který
+            obsahuje jméno typu informačních položek element, pokud je tento
+            typ pojmenovaný; nebo, pokud je typ anonymní a zároveň jednoduchý,
+            obsahuje jméno základního typu, ze kterého je typ informačních
+            položek element odvozen. Základem je vlastnost
+            <property>name</property> definice typu (<emphasis>Type
+            definition</emphasis>).</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>cardinality</parameter> je řetězec,
+            který udává minimální a maximální počet výskytů informační položky
+            element. Pokud není uveden, znamená to, že hodnoty jsou implicitní
+            (min = max = 1), a řetězec nebude vykreslen. Minimální a maximální
+            počet výskytů je dán vlastnostmi částice
+            (<emphasis>Particle</emphasis>) obsahující tuto deklaraci
+            elementu. Jejich názvy jsou <property>min occurs</property> a
+            <property>max occurs</property>.</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>nillable</parameter> booleovského typu
+            říká, zda mohou mít informační položky element prázdný obsah
+            (hodnota <literal>true</literal>), nebo ne
+            (<literal>false</literal>). Hodnotu udává deklarace elementu ve
+            vlastnosti <property>nillable</property>.</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>abstr</parameter> je booleovského typu.
+            Pokud je hodnota nastavena na <literal>true</literal>, není tato
+            deklarace sama o sobě použita k validování obsahu elementů.
+            Hodnotu udává deklarace elementu ve vlastnosti
+            <property>abstract</property>.</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>substitution</parameter> je řetězec s
+            názvem substituční skupiny, do které tato deklarace patří.
+            Skutečnou hodnotu poskytuje deklarace elementu ve vlastnosti
+            <property>substitution group affiliation</property>.</para>
+          </listitem>
+        </itemizedlist>
+
+        <para>Do symbolu bude nutné vtěsnat hodně informací a přitom nezaplnit
+        velkou plochu. Proto budou poslední tři vlastnosti zobrazeny teprve
+        při najetí myši místo vlastností <property>namespace</property> a
+        <property>type</property>.</para>
+
+        <figure>
+          <title>Symbol <literal>element</literal> (normální režim; při najetí
+          myši)</title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/element.svg" format="SVG"
+                         scale="115" />
+            </imageobject>
+          </mediaobject>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/element2.svg" format="SVG"
+                         scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="SYMBOL-ATTRIBUTE">
+        <title><literal>attribute</literal></title>
+
+        <para><classname>SymbolAttribute</classname> zobrazuje jméno
+        informační položky atribut, její typ a zařazení ke jmennému prostoru a
+        další vlastnosti dostupné z komponent užití atributu
+        (<emphasis>Attribute use</emphasis>) a deklarace atributu
+        (<emphasis>Attribute declaration</emphasis>).</para>
+
+        <itemizedlist spacing="normal">
+          <listitem>
+            <para>Parametr <parameter>name</parameter> je textový řetězec,
+            obsahující lokální část jména informační položky atribut, jež je
+            validována. Hodnotu poskytne deklarace atributu ve vlastnosti
+            <property>name</property>.</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>namespace</parameter> je řetězec se
+            jmenným prostorem. Ten kvalifikuje informační položky atribut.
+            Cílový jmenný prostor udává deklarace atributu svou vlastností
+            <property>namespace</property>.</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>type</parameter> je řetězec, který
+            obsahuje jméno typu informační položky atribut, pokud je tento typ
+            pojmenovaný; nebo, pokud je typ anonymní, obsahuje jméno
+            základního typu, ze kterého je typ informační položky atribut
+            odvozen. Základem je vlastnost <property>name</property> definice
+            jednoduchého typu (<emphasis>Simple type
+            definition</emphasis>).</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>required</parameter> booleovského typu
+            říká, zda musí být přítomna odpovídající informační položka
+            atribut (hodnota <literal>true</literal>), nebo zda je volitelná
+            (<literal>false</literal>). Kromě vypsání odpovídajícího řetězce
+            bude volitelný atribut ohraničen přerušovanou čárou, zatímco
+            povinný atribut plnou. Parametr má stejnou hodnotu jako vlastnost
+            užití atributu s názvem <property>required</property>.</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>constraint</parameter> je textový
+            řetězec, který specifikuje omezení pro hodnotu informační položky
+            atribut (fixní nebo defaultní hodnota). Řetězec je vytvořen z
+            vlastnosti <property>value constraint</property>. Tu poskytuje
+            komponenta užití atributu nebo deklarace atributu.</para>
+          </listitem>
+        </itemizedlist>
+
+        <para>Hodnoty posledních dvou parametrů se zobrazí teprve po najetí
+        myši na symbol <literal>attribute</literal>.</para>
+
+        <figure>
+          <title>Symbol <literal>attribute</literal> (volitelný atribut v
+          normálním režimu; a po najetí myši; povinný atribut v normálním
+          režimu)</title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/attribute_optional.svg" format="SVG"
+                         scale="115" />
+            </imageobject>
+          </mediaobject>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/attribute_optional2.svg"
+                         format="SVG" scale="115" />
+            </imageobject>
+          </mediaobject>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/attribute_required.svg" format="SVG"
+                         scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="SYMBOL-ANY">
+        <title><literal>any</literal></title>
+
+        <para><classname>SymbolAny</classname> představuje divokou kartu
+        (<emphasis>Wildcard</emphasis>) pro elementy. Na jejím místě mohou být
+        informační položky element s libovolným lokálním jménem, které ale
+        musí vyhovět omezením kladeným na jejich jmenný prostor.<itemizedlist
+            spacing="normal">
+            <listitem>
+              <para>Parametr <parameter>namespace</parameter> je textový
+              řetězec, představující omezení kladené na jmenný prostor
+              informačních položek element. Řetězec je utvořen z vlastnosti
+              <property>namespace constraint</property> komponenty divoká
+              karta.</para>
+            </listitem>
+
+            <listitem>
+              <para>Parametr <parameter>processContents</parameter> je celé
+              číslo, které slouží k rozlišení způsobů zpracování informačních
+              položek element. Hodnota vychází z vlastnosti <property>process
+              contents</property> divoké karty a závisí na ní vyobrazení
+              symbolu. Parametr nabývá hodnot:<itemizedlist spacing="compact">
+                  <listitem>
+                    <para><constant>3</constant> – způsob zpracování
+                    <literal>lax</literal>. Pokud existuje unikátní deklarace
+                    položky, musí položka této deklaraci vyhovovat.</para>
+                  </listitem>
+
+                  <listitem>
+                    <para><constant>2</constant> – odpovídá způsobu zpracování
+                    <literal>skip</literal>. Nevzniká žádné omezení, položka
+                    musí být pouze dobře strukturované XML.</para>
+                  </listitem>
+
+                  <listitem>
+                    <para><constant>1</constant> (a ostatní přípustné hodnoty)
+                    – způsob zpracování <literal>strict</literal>. Informační
+                    položka musí mít přiřazen xsi:type, nebo musí být k
+                    dispozici její deklarace, oproti které je prováděna
+                    validace.</para>
+                  </listitem>
+                </itemizedlist></para>
+            </listitem>
+
+            <listitem>
+              <para>Parametr <parameter>cardinality</parameter> je řetězec,
+              který udává minimální a maximální počet výskytů informační
+              položky element. Pokud není uveden, znamená to, že hodnoty jsou
+              implicitní (min = max = 1), a řetězec nebude vykreslen.
+              Minimální a maximální počet výskytů je dán vlastnostmi částice
+              (<emphasis>Particle</emphasis>) obsahující tuto divokou kartu.
+              Jejich názvy jsou <property>min occurs</property> a
+              <property>max occurs</property>.</para>
+            </listitem>
+          </itemizedlist></para>
+
+        <figure>
+          <title>Symbol <literal>any</literal> (způsob zpracování
+          <literal>strict</literal>; způsob zpracování
+          <literal>skip</literal>; způsob zpracování
+          <literal>lax</literal>)</title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/any_strict.svg" format="SVG"
+                         scale="115" />
+            </imageobject>
+          </mediaobject>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/any_skip.svg" format="SVG"
+                         scale="115" />
+            </imageobject>
+          </mediaobject>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/any_lax.svg" format="SVG"
+                         scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="SYMBOL-ANY-ATTRIBUTE">
+        <title><literal>anyAttribute</literal></title>
+
+        <para><classname>SymbolAnyAttribute</classname> představuje divokou
+        kartu (<emphasis>Wildcard</emphasis>) pro atributy. Na jejím místě
+        mohou být informační položky atribut s libovolným lokálním jménem,
+        které ale musí vyhovět omezením kladeným na jejich jmenný
+        prostor.</para>
+
+        <itemizedlist spacing="normal">
+          <listitem>
+            <para>Parametr <parameter>namespace</parameter> je textový
+            řetězec, představující omezení kladené na jmenný prostor
+            informačních položek atribut. Řetězec je utvořen z vlastnosti
+            <property>namespace constraint</property> komponenty divoká
+            karta.</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>processContents</parameter> je celé
+            číslo, které slouží k rozlišení způsobů zpracování informačních
+            položek atribut. Hodnota vychází z vlastnosti <property>process
+            contents</property> divoké karty a závisí na ní vyobrazení
+            symbolu. Parametr nabývá hodnot:<itemizedlist spacing="compact">
+                <listitem>
+                  <para><constant>3</constant> – způsob zpracování
+                  <literal>lax</literal>. Pokud existuje unikátní deklarace
+                  položky, musí položka této deklaraci odpovídat.</para>
+                </listitem>
+
+                <listitem>
+                  <para><constant>2</constant> – odpovídá způsobu zpracování
+                  <literal>skip</literal>. Nevzniká žádné omezení, položka
+                  musí být pouze dobře strukturované XML.</para>
+                </listitem>
+
+                <listitem>
+                  <para><constant>1</constant> (a ostatní přípustné hodnoty) –
+                  způsob zpracování <literal>strict</literal>. Informační
+                  položka musí mít přiřazen xsi:type, nebo musí být k
+                  dispozici její deklarace, oproti které je prováděna
+                  validace.</para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+        </itemizedlist>
+
+        <figure>
+          <title>Symbol <literal>anyAttribute</literal> (způsob zpracování
+          <literal>strict</literal>; způsob zpracování
+          <literal>skip</literal>; způsob zpracování
+          <literal>lax</literal>)</title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/any_attribute_strict.svg"
+                         format="SVG" scale="115" />
+            </imageobject>
+          </mediaobject>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/any_attribute_skip.svg" format="SVG"
+                         scale="115" />
+            </imageobject>
+          </mediaobject>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/any_attribute_lax.svg" format="SVG"
+                         scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="SYMBOL-ALL">
+        <title><literal>all</literal></title>
+
+        <para><classname>SymbolAll</classname> znázorňuje kompozitor
+        <literal>all</literal> modelové skupiny (<emphasis>Model
+        group</emphasis>). Ten říká, že se děti informační položky element,
+        definované v modelové skupině jako <property>particles</property>,
+        mohou vyskytovat v libovolném pořadí.</para>
+
+        <itemizedlist spacing="normal">
+          <listitem>
+            <para>Parametr <parameter>cardinality</parameter> je řetězec,
+            který udává minimální a maximální počet výskytů dětí informační
+            položky element. Pokud není uveden, znamená to, že hodnoty jsou
+            implicitní (min = max = 1), a řetězec nebude vykreslen. Minimální
+            a maximální počet výskytů je dán vlastnostmi částice
+            (<emphasis>Particle</emphasis>) obsahující tuto modelovou skupinu.
+            Jejich názvy jsou <property>min occurs</property> a <property>max
+            occurs</property>.</para>
+          </listitem>
+        </itemizedlist>
+
+        <figure>
+          <title>Symbol <literal>all</literal></title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/all.svg" format="SVG" scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="SYMBOL-CHOICE">
+        <title><literal>choice</literal></title>
+
+        <para><classname>SymbolChoice</classname> znázorňuje kompozitor
+        <literal>choice</literal> modelové skupiny (<emphasis>Model
+        group</emphasis>). Pouze jedna z částic
+        (<emphasis>Particle</emphasis>), definovaných v modelové skupině jako
+        <property>particles</property>, se může v XML dokumentu objevit jako
+        dítě informační položky element.</para>
+
+        <itemizedlist spacing="normal">
+          <listitem>
+            <para>Parametr <parameter>cardinality</parameter> je řetězec,
+            který udává minimální a maximální počet výskytů dětí informační
+            položky element. Pokud není uveden, znamená to, že hodnoty jsou
+            implicitní (min = max = 1), a řetězec nebude vykreslen. Minimální
+            a maximální počet výskytů je dán vlastnostmi částice
+            (<emphasis>Particle</emphasis>) obsahující tuto modelovou skupinu.
+            Jejich názvy jsou <property>min occurs</property> a <property>max
+            occurs</property>.</para>
+          </listitem>
+        </itemizedlist>
+
+        <figure>
+          <title>Symbol <literal>choice</literal></title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/choice.svg" format="SVG" scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="SYMBOL-SEQUENCE">
+        <title><literal>sequence</literal></title>
+
+        <para><classname>SymbolSequence</classname> znázorňuje kompozitor
+        <literal>sequence</literal> modelové skupiny (<emphasis>Model
+        group</emphasis>). Každá z částic (<emphasis>Particle</emphasis>),
+        definovaných v modelové skupině jako <property>particles</property>,
+        se může objevit v XML dokumentu jako dítě informační položky element,
+        a to ve specifikovaném pořadí.</para>
+
+        <itemizedlist spacing="normal">
+          <listitem>
+            <para>Parametr <parameter>cardinality</parameter> je řetězec,
+            který udává minimální a maximální počet výskytů dětí informační
+            položky element. Pokud není uveden, znamená to, že hodnoty jsou
+            implicitní (min = max = 1), a řetězec nebude vykreslen. Minimální
+            a maximální počet výskytů je dán vlastnostmi částice
+            (<emphasis>Particle</emphasis>) obsahující tuto modelovou skupinu.
+            Jejich názvy jsou <property>min occurs</property> a <property>max
+            occurs</property>.</para>
+          </listitem>
+        </itemizedlist>
+
+        <figure>
+          <title>Symbol <literal>sequence</literal></title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/sequence.svg" format="SVG"
+                         scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="SYMBOL-UNIQUE">
+        <title><literal>unique</literal></title>
+
+        <para><classname>SymbolUnique</classname> znázorňuje část definice
+        identitního omezení (<emphasis>Identity-constraint
+        definition</emphasis>), konkrétně jméno a jmenný prostor kategorie
+        <literal>unique</literal>. Ta zajišťuje jedinečnost hodnot v rámci
+        obsahu vymezeného selektorem <xref linkend="SYMBOL-SELECTOR" />, které
+        jsou výsledkem vyhodnocení XPath výrazů uvedených v polích <xref
+        linkend="SYMBOL-FIELD" />.</para>
+
+        <itemizedlist spacing="normal">
+          <listitem>
+            <para>Parametr <parameter>name</parameter> je textový řetězec,
+            obsahující jméno definice identitního omezení. Hodnotu poskytne
+            tato definice ve vlastnosti <property>name</property>.</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>namespace</parameter> je řetězec se
+            jmenným prostorem. Ten kvalifikuje definici identitního omezení.
+            Jmenný prostor udává definice svou vlastností
+            <property>namespace</property>. Dvojice jméno a jmenný prostor
+            identifikuje definici identitního omezení, a proto musí být v
+            rámci XML schématu unikátní.</para>
+          </listitem>
+        </itemizedlist>
+
+        <figure>
+          <title>Symbol <literal>unique</literal></title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/unique.svg" format="SVG" scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="SYMBOL-KEY">
+        <title><literal>key</literal></title>
+
+        <para><classname>SymbolKey</classname> znázorňuje část definice
+        identitního omezení (<emphasis>Identity-constraint
+        definition</emphasis>), konkrétně jméno a jmenný prostor kategorie
+        <literal>key</literal>. Ta zajišťuje jedinečnost a přítomnost hodnot
+        v rámci obsahu vymezeného selektorem <xref
+        linkend="SYMBOL-SELECTOR" />, které jsou výsledkem vyhodnocení XPath
+        výrazů uvedených v polích <xref linkend="SYMBOL-FIELD" />.</para>
+
+        <itemizedlist spacing="normal">
+          <listitem>
+            <para>Parametr <parameter>name</parameter> je textový řetězec,
+            obsahující jméno definice identitního omezení. Hodnotu poskytne
+            tato definice ve vlastnosti <property>name</property>.</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>namespace</parameter> je řetězec se
+            jmenným prostorem. Ten kvalifikuje definici identitního omezení.
+            Jmenný prostor udává definice svou vlastností
+            <property>namespace</property>. Dvojice jméno a jmenný prostor
+            identifikuje definici identitního omezení, a proto musí být v
+            rámci XML schématu unikátní.</para>
+          </listitem>
+        </itemizedlist>
+
+        <figure>
+          <title>Symbol <literal>key</literal></title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/key.svg" format="SVG" scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="SYMBOL-KEYREF">
+        <title><literal>keyref</literal></title>
+
+        <para><classname>SymbolKeyref</classname> znázorňuje část definice
+        identitního omezení (<emphasis>Identity-constraint
+        definition</emphasis>), konkrétně jméno a jmenný prostor kategorie
+        <literal>keyref</literal>. Ta zajišťuje, že hodnoty, které jsou
+        výsledkem vyhodnocení XPath výrazů uvedených v polích <xref
+        linkend="SYMBOL-FIELD" />, budou odpovídat hodnotám, jež specifikuje
+        vlastnost <property>referenced key</property> definice identitního
+        omezení. Tato podmínka se vyhodnocuje v rámci obsahu určeného
+        selektorem <xref linkend="SYMBOL-SELECTOR" />.</para>
+
+        <itemizedlist spacing="normal">
+          <listitem>
+            <para>Parametr <parameter>name</parameter> je textový řetězec,
+            obsahující jméno definice identitního omezení. Hodnotu poskytne
+            tato definice ve vlastnosti <property>name</property>.</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>namespace</parameter> je řetězec se
+            jmenným prostorem. Ten kvalifikuje definici identitního omezení.
+            Jmenný prostor udává definice svou vlastností
+            <property>namespace</property>. Dvojice jméno a jmenný prostor
+            identifikuje definici identitního omezení, a proto musí být v
+            rámci XML schématu unikátní.</para>
+          </listitem>
+
+          <listitem>
+            <para>Parametr <parameter>refer</parameter> je řetězec, který
+            slouží jako odkaz na jinou definici identitního omezení kategorie
+            <literal>key</literal> nebo <literal>unique</literal>. Hodnotu
+            poskytne tato definice ve vlastnosti <property>referenced
+            key</property>.</para>
+          </listitem>
+        </itemizedlist>
+
+        <figure>
+          <title>Symbol <literal>keyref</literal></title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/keyref.svg" format="SVG" scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="SYMBOL-SELECTOR">
+        <title><literal>selector</literal></title>
+
+        <para><classname>SymbolSelector</classname> slouží ke zobrazení
+        vlastnosti <property>selector</property> definice identitního omezení
+        (<emphasis>Identity-constraint definition</emphasis>).<itemizedlist
+            spacing="normal">
+            <listitem>
+              <para>Parametr <parameter>xpath</parameter> je textový řetězec.
+              Specifikuje omezený XPath výraz, relativní k instanci
+              deklarovaného elementu. Výraz musí identifikovat množinu uzlů –
+              podřízených elementů, na které se vztahuje omezení. Hodnota
+              parametru se získá z vlastnosti <property>selector</property>
+              definice identitního omezení.</para>
+            </listitem>
+          </itemizedlist></para>
+
+        <figure>
+          <title>Symbol <literal>selector</literal></title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/selector.svg" format="SVG"
+                         scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="SYMBOL-FIELD">
+        <title><literal>field</literal></title>
+
+        <para><classname>SymbolField</classname> slouží ke zobrazení jednoho
+        prvku ze seznamu – vlastnosti <property>fields</property> definice
+        identitního omezení (<emphasis>Identity-constraint
+        definition</emphasis>).</para>
+
+        <itemizedlist spacing="normal">
+          <listitem>
+            <para>Parametr <parameter>xpath</parameter> je textový řetězec.
+            Specifikuje omezený XPath výraz, relativní ke každému elementu,
+            který je vybrán selektorem <xref linkend="SYMBOL-SELECTOR" />.
+            Výraz musí identifikovat konkrétní uzel (element nebo atribut),
+            jehož obsah nebo hodnota musí být jednoduchého typu a je použita v
+            omezení. Hodnota parametru se získá z vlastnosti
+            <property>fields</property> definice identitního omezení.</para>
+          </listitem>
+        </itemizedlist>
+
+        <figure>
+          <title>Symbol <literal>field</literal></title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/field.svg" format="SVG" scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+
+      <section id="SYMBOL-LOOP">
+        <title>smyčka</title>
+
+        <para><classname>SymbolLoop</classname> je pomocný symbol, který
+        nepatří do XML schématu. Vykreslí se, pokud by mělo dojít k zacyklení.
+        Deklarace elementu totiž může nepřímo obsahovat samu sebe, a to za
+        splnění těchto podmínek:</para>
+
+        <orderedlist spacing="compact">
+          <listitem>
+            <para>Deklarace elementu je komplexního typu.</para>
+          </listitem>
+
+          <listitem>
+            <para>Komplexní typ (1) obsahuje částici
+            (<emphasis>Particle</emphasis>).</para>
+          </listitem>
+
+          <listitem>
+            <para>Termínem (<property>term</property>) částice (2) je modelová
+            skupina (<emphasis>ModelGroup</emphasis>) – vždy složená z dalších
+            částic.</para>
+          </listitem>
+
+          <listitem>
+            <para>Termínem alespoň jedné z částic (3) je deklarace elementu
+            totožná s deklarací uvedenou v bodě (1); nebo je termínem alespoň
+            jedné z částic (3) modelová skupina a v tom případě se postupuje
+            rekurzivně od bodu (3), dokud nebude nalezena deklarace elementu
+            totožná s deklarací uvedenou v bodě (1).</para>
+          </listitem>
+        </orderedlist>
+
+        <para>Nemá parametry.</para>
+
+        <figure>
+          <title>Symbol smyčky</title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="symbols/_loop.svg" format="SVG" scale="115" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </section>
+    </section>
+
+    <section id="INTERACTIVITY">
+      <title>Interaktivita modelu</title>
+
+      <para>Jedním z požadavků kladených na grafický model je jeho
+      interaktivita. SVG se dá rozpohybovat pomocí ECMAScriptu (JavaScriptu).
+      Jednoduše půjde zajistit změnu zobrazovaných informací při najetí
+      kurzoru myši na symboly <xref linkend="SYMBOL-ELEMENT" /> a <xref
+      linkend="SYMBOL-ATTRIBUTE" />. Složitější je implementovat rozbalování a
+      skrývání podstromů jednotlivých symbolů. Aby to bylo možné, musí SVG
+      dokument znát umístění symbolů v rámci jejich stromu. K vysvětlení
+      použiji následující příklad:</para>
+
+      <programlisting>&lt;g id='_1_1_1_2' class='box' transform='translate(395,121)'&gt;
+    &lt;rect class='shadow' x='3' y='3' width='117' height='46'/&gt;
+    &lt;rect class='boxelement' x='0' y='0' width='117' height='46'
+        onmouseover='makeVisible("_1_1_1_2")' onmouseout='makeHidden("_1_1_1_2")'/&gt;
+    &lt;text class='hidden' visibility='hidden' x='5' y='13'&gt;nillable: 0&lt;/text&gt;
+    &lt;text class='hidden' visibility='hidden' x='5' y='41'&gt;abstract: 0&lt;/text&gt;
+    &lt;text class='strong' x='5' y='27'&gt;address&lt;/text&gt;
+    &lt;text class='visible' x='5' y='41'&gt;type: AddressType&lt;/text&gt;
+    &lt;line class='connection' id='p_1_1_1_2' x1='-35' y1='-48' x2='-35' y2='-40'/&gt;
+    &lt;path class='connection' d='M-35,-40 Q-35,15 0,23'/&gt;
+    &lt;use x='116' y='17' xlink:href='#plus' id='s_1_1_1_2' onclick='show("_1_1_1_2")'/&gt;
+&lt;/g&gt;</programlisting>
+
+      <para>Jedná se o XML reprezentaci symbolu <literal>address</literal>.
+      Ten se skládá z několika SVG elementů a je zobrazen jako <xref
+      linkend="ADDRESS-SYMBOL" />.</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Symbol je tvořen dvěma obdélníky. První je mírně posunutý a
+          tvoří lehký stín. Druhý z nich tvoří hlavní box a je citlivý na
+          najetí myši.</para>
+        </listitem>
+
+        <listitem>
+          <para>Dále symbol obsahuje čtyři textové položky. První dvě
+          s obsahem „nillable: 0“ a „abstract: 0“ jsou teď skryty. Řetězce
+          „address“ a „type: AddressType“ jsou naopak viditelné.</para>
+        </listitem>
+
+        <listitem>
+          <para>Následuje úsečka a na ní navazující křivka, která zleva
+          připojuje symbol ke svému rodiči.</para>
+        </listitem>
+
+        <listitem>
+          <para>Nakonec je použit předem definovaný symbol „plus“, což je malý
+          čtverec se znakem plus. Je citlivý na kliknutí myši.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Navíc, aby se se symbolem dalo pracovat jako s jedním celkem, jsou
+      všechny popsané položky obaleny jako skupina elementem
+      <sgmltag>&lt;g&gt;</sgmltag>. Ten dále umožňuje transformaci pozice
+      symbolu a jeho jednoznačnou identifikaci v rámci stromu.</para>
+
+      <figure id="ADDRESS-SYMBOL">
+        <title>Symbol elementu address (v normálním režimu; při najetí
+        myši)</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="images/address.svg" format="SVG" scale="115" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <para>Pro změnu zobrazovaných položek při najetí myši stačí, aby měl
+      každý symbol jednoznačný identifikátor. Ten je předáván ECMAScriptovým
+      metodám <methodname>makeVisible</methodname>(<parameter>id</parameter>)
+      a <methodname>makeHidden</methodname>(<parameter>id</parameter>) při
+      najetí kurzoru myši na hlavní box symbolu, respektive při jeho sjetí z
+      boxu. Změna spočívá v tom, že položky, které měly nastavenou třídu
+      (<property>class</property>) na hidden, budou nyní viditelné. Jedná se o
+      textové řetězce „nillable: 0“ a „abstract: 0“. Naopak položky ve třídě
+      visible budou dočasně skryty. Sem patří pouze řetězec „type:
+      AddressType“. Viz obrázek <xref linkend="ADDRESS-SYMBOL" />.</para>
+
+      <para>Zde použitý identifikátor symbolu je poměrně složitý, jedná se o
+      řetězec <literal>_1_1_1_2</literal>. Jeho použití je však opodstatněné.
+      Už jsem napsal, že pro práci s podstromy symbolů, musí být v SVG
+      dokumentu patrné, do které části stromu symbol spadá. To lze jednoznačně
+      určit pomocí takovýchto identifikátorů, uvedením cesty od kořene stromu
+      až ke konkrétnímu symbolu. Podívejte se na obrázek <xref
+      linkend="INTERACTIVITY-MODEL" />.</para>
+
+      <figure id="INTERACTIVITY-MODEL">
+        <title>Model s kódy symbolů</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="images/model_interactivity.png" format="PNG"
+                       scale="75" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <para>Kořenový symbol má identifikátor <literal>_1</literal>. Potržítko
+      je nutné kvůli přípustným hodnotám attributu <literal>id</literal>, je
+      tedy zvoleno i jako oddělovač. Kořenový symbol má dále dvě děti. Jejich
+      identifikátory jsou tvořeny identifikátorem rodiče a přidanou vlastní
+      částí, která udává jejich pozici. Dostáváme řetězce
+      <literal>_1_1</literal> a <literal>_1_2</literal>. Analogicky symbol
+      <literal>_1_1</literal> má dítě <literal>_1_1_1</literal>. Symbol s
+      identifikátorem <literal>_1_1_1</literal> má dvě děti a druhé z nich
+      (<literal>_1_1_1_2</literal>) je popisovaný prvek, symbol elementu
+      <literal>address</literal>.</para>
+
+      <para>Při kliknutí na symbol minus za boxem <literal>address</literal>
+      se zavolá ECMAScriptová metoda
+      <methodname>show</methodname>(<parameter>"_1_1_1_2"</parameter>). Ta
+      provede následující:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Změní tu symbol minus na plus, přepsáním atributu
+          <literal>xlink:href</literal> elementu
+          <sgmltag>&lt;use&gt;</sgmltag> tak, aby odkazoval na předem
+          definovaný grafický objekt <literal>plus</literal>.</para>
+        </listitem>
+
+        <listitem>
+          <para>Schová celý podstrom symbolů připojený zprava k boxu. Patří do
+          něj všechny symboly, jejichž identifikátor začíná také na
+          <literal>_1_1_1_2</literal>. U elementů <sgmltag>&lt;g&gt;</sgmltag>
+          obalujících objekty, z nichž se symbol skládá, se nastaví atribut
+          <literal>visibility</literal> na hodnotu
+          <property>hidden</property>.</para>
+        </listitem>
+
+        <listitem>
+          <para>Vzniklý prostor se zaplní vedlejšími větvemi. Ty se posunou
+          směrem nahoru, přenastavením hodnoty atributu
+          <literal>transform</literal> u seskupujícícho elementu
+          <sgmltag>&lt;g&gt;</sgmltag>. Výpočet vzdálenosti, o kterou se mohou
+          symboly posunout, je nutné provést pouze pro jeden symbol, pro
+          ostatní je vzdálenost stejná. Zde poslouží také systém identifikace.
+          Navíc je třeba zkrátit úsečku propojující rodičovské symboly s
+          posouvanou větví.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Výsledek je možné vidět na obrázku <xref
+      linkend="INTERACTIVITY-MODEL-2" />. Pokud teď klikneme na symbol plus,
+      zavolá se opět metoda
+      <methodname>show</methodname>(<parameter>"_1_1_1_2"</parameter>). Ta teď
+      ale bude pracovat přesně naopak, než bylo popsáno.</para>
+
+      <para>Kromě výše uvedené funkčnosti budou poskytnuta tlačítka pro
+      zobrazení a skrytí všech symbolů, až na kořenový. Časem přibudou i
+      škálovací tlačítka <emphasis>zoom in</emphasis> a <emphasis>zoom
+      out</emphasis>, zatím se lze obejít bez nich a využít funkce
+      prohlížeče.</para>
+
+      <figure id="INTERACTIVITY-MODEL-2">
+        <title>Model po skrytí podstromu elementu address</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="images/model_interactivity2.png" format="PNG"
+                       scale="75" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+    </section>
+
+    <section>
+      <title>Výsledná SVG reprezentace schématu</title>
+
+      <para>Když splním všechny podmínky, získám z aplikace výstup ve formátu
+      SVG, jehož grafickou reprezentaci si můžete prohlédnout na obrázku <xref
+      linkend="MY-MODEL" />. V příloze <xref linkend="EXAMPLES" /> je pro
+      přehlednost znovu uvedeno jak vstupní XML schéma, tak i SVG výstup v XML
+      i grafické reprezentaci.</para>
+
+      <bridgehead id="STYLE">Styl</bridgehead>
+
+      <para>Výsledný diagram se ale dá ještě dodatečně upravovat, jeho vzhled
+      je totiž nastaven v CSS stylu. Aplikace dokáže styl generovat jako
+      součást SVG dokumentu nebo zvlášť, nebo pouze připojit existující
+      externí styl. Kaskádové styly využívají selektory pro výběr určitých
+      elementů, kterým pak nastaví vzhled. Výběr může být určen názvem tagu,
+      pokud však chceme jednotně upravit určité logické celky, lze využít
+      jejich zařazení do tříd (<property>class</property>). V SVG výstupu
+      vznikly tyto třídy:</para>
+
+      <itemizedlist spacing="compact">
+        <listitem>
+          <para><property>strong</property> pro důležité nápisy jako jsou
+          názvy elementů a atributů. Písmo je větší a tučné.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>small</property> pro text, jenž je součástí grafiky,
+          psaný menším písmem.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>big</property> pro text, jenž je součástí grafiky,
+          psaný větším písmem.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>button</property> pro tlačítka; podstatou je, že má
+          v parametru <property>pointer-events</property> zapnutou citlivost
+          na určité události, především nám jde o kliknutí myši.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>shadow</property> je třída pro stín zobrazovaný za
+          některými boxy.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>connection</property> zahrnuje úsečky a křivky
+          propojující jednotlivé grafické symboly (boxy).</para>
+        </listitem>
+
+        <listitem>
+          <para><property>empty</property> pro tvary obtažené, bez
+          výplně.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>filled</property> pro tvary vyplněné, bez
+          obtažení.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>boxelement</property> pro box symbolu <xref
+          linkend="SYMBOL-ELEMENT" />.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>boxattribute1</property> pro box symbolu <xref
+          linkend="SYMBOL-ATTRIBUTE" />, pokud je použití atributu
+          povinné.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>boxattribute2</property> pro box symbolu <xref
+          linkend="SYMBOL-ATTRIBUTE" />, pokud je použití atributu
+          volitelné.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>boxany</property> pro box symbolu <xref
+          linkend="SYMBOL-ANY" />.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>boxanyattribute</property> pro box symbolu <xref
+          linkend="SYMBOL-ANY-ATTRIBUTE" />.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>boxschema</property> pro box symbolu <xref
+          linkend="SYMBOL-SCHEMA" />.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>boxcompositor</property> pro boxy symbolů <xref
+          linkend="SYMBOL-ALL" />, <xref linkend="SYMBOL-CHOICE" />, <xref
+          linkend="SYMBOL-SEQUENCE" />.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>boxloop</property> pro box symbolu <xref
+          linkend="SYMBOL-LOOP" />.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>boxidc</property> pro boxy symbolů <xref
+          linkend="SYMBOL-UNIQUE" />, <xref linkend="SYMBOL-KEY" />, <xref
+          linkend="SYMBOL-KEYREF" />.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>boxselector</property> pro box symbolu <xref
+          linkend="SYMBOL-SELECTOR" />.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>boxfield</property> pro box symbolu <xref
+          linkend="SYMBOL-FIELD" />.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>lax</property> slouží k dalšímu nastavení vzhledu u
+          boxů <xref linkend="SYMBOL-ANY" /> a <xref
+          linkend="SYMBOL-ANY-ATTRIBUTE" />, pokud je u nich způsob zpracování
+          nastaven na <emphasis>lax</emphasis>.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>skip</property> slouží k dalšímu nastavení vzhledu u
+          boxů <xref linkend="SYMBOL-ANY" /> a <xref
+          linkend="SYMBOL-ANY-ATTRIBUTE" />, pokud je u nich způsob zpracování
+          nastaven na <emphasis>skip</emphasis>.</para>
+        </listitem>
+
+        <listitem>
+          <para><property>strict</property> slouží k dalšímu nastavení vzhledu
+          u boxů <xref linkend="SYMBOL-ANY" /> a <xref
+          linkend="SYMBOL-ANY-ATTRIBUTE" />, pokud je u nich způsob zpracování
+          nastaven na <emphasis>strict</emphasis>.</para>
+        </listitem>
+      </itemizedlist>
+
+      <bridgehead>Původní styl generovaný aplikací</bridgehead>
+
+      <programlisting>svg {pointer-events: none;}
+text {font-family: arial; font-size: 11px;}
+line, polyline, polygon {fill: none; stroke: black;}
+
+.strong {font-size: 12px; font-weight: bold;}
+.small {font-size: 10px;}
+.big {font-size: 15px; fill: #882222;}
+
+.button {fill: white; stroke: black; pointer-events: all;}
+.shadow {fill: #ccccd8; stroke: none;}
+.connection {fill: none; stroke: #666666;}
+.empty {fill: none; stroke: black;}
+.filled {fill: black; stroke: none;}
+
+.boxelement, .boxany, .boxattribute1, .boxanyattribute
+  {fill: #FFFFBB; stroke: #776633; pointer-events: all;}
+.boxattribute2
+  {fill: #FFFFBB; stroke: #776633; pointer-events: all; stroke-dasharray: 2;}
+.boxschema, .boxloop, .boxcompositor {fill: #E7EBF3; stroke: #666677;}
+.boxselector, .boxfield, .boxidc {fill: #E0F7B7; stroke: #667733;}
+
+.lax {fill: white; stroke: black;}
+.skip {fill: #cc6666; stroke: black;}
+.strict {fill: black; stroke: none;}</programlisting>
+
+      <figure id="MY-MODEL">
+        <title>Výstup aplikace pro výše uvedený příklad XML schématu</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="images/model_my.svg" format="SVG" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+    </section>
+  </chapter>
+
+  <chapter id="XSD-PROCESSING">
+    <title>Zpracování XML schématu</title>
+
+    <para>V této kapitole ukážu způsob procházení mezi komponentami schématu a
+    vytvořím tak koncept jádra aplikace. Jednotlivé oddíly se věnují
+    zpracování konkrétních komponent a vedle algoritmu zpracování obsahují
+    také popis převzatý ze specifikace <xref linkend="XSD1" />. Odkaz na
+    konkrétní část specifikace uvádím u každého oddílu v poznámce pod
+    čarou.</para>
+
+    <para>Jako základní knihovnu, na které postavím aplikaci, jsem po
+    předchozím uvážení zvolil open-source parser Xerces. Ten poskytuje plnou
+    podporu XML schémat podle <xref linkend="XSD0" />, <xref linkend="XSD1" />
+    a <xref linkend="XSD2" />, až na několik omezení, které v naprosté většině
+    případů nebudou tvořit překážku.<footnote>
+        <para>The Apache XML Project: <emphasis>Xerces2 Java Parser
+        Readme</emphasis>. XML Schema. <ulink
+        url="http://xerces.apache.org/xerces2-j/xml-schema.html">http://xerces.apache.org/xerces2-j/xml-schema.html</ulink></para>
+      </footnote> Implementace Xerces tak bude pracovat v souladu se
+    specifikací W3C a bude užívat její termíny.</para>
+
+    <para>Obrázek <xref lang="" linkend="DIAGRAM_KOMPONENT" /> nám umožní
+    udělat si snadno představu o vazbách a základních vlastnostech
+    jednotlivých komponent XML schématu, jež jsou definovány v třetí části
+    specifikace.<footnote>
+        <para><xref linkend="XSD1" /> Schema Component Details. <ulink
+        url="http://www.w3.org/TR/xmlschema-1/#components">http://www.w3.org/TR/xmlschema-1/#components</ulink></para>
+      </footnote></para>
+
+    <section id="PROCESS-MODEL">
+      <title>Zpracování samotného schématu<footnote>
+          <para><xref linkend="XSD1" /> <ulink
+          url="http://www.w3.org/TR/xmlschema-1/#Schemas">http://www.w3.org/TR/xmlschema-1/#Schemas</ulink></para>
+        </footnote></title>
+
+      <para>Schéma (<emphasis>Schema</emphasis>, v Xercesu třída
+      <classname>XSModel</classname>) slouží na abstraktní úrovni jako
+      kontejner pro jednotlivé komponenty. Jedná se o komponenty globální,
+      tedy pojmenované a anotace.</para>
+
+      <para>Metoda
+      <methodname>processModel</methodname>(<classname>XSModel</classname>
+      <parameter>model</parameter>) bude mít na starost zpracování
+      schématu.</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Vytvoří se symbol <xref linkend="SYMBOL-SCHEMA" /> a bude
+          vložen jako kořen do stromové struktury symbolů.</para>
+        </listitem>
+
+        <listitem>
+          <para>Bude volána pomocná metoda
+          <methodname>processElementDeclarations</methodname>(<parameter>elementDeclarations</parameter>)
+          [<xref lang="" linkend="PROCESS-ELEMENT-DECLARATIONS" />],
+          parametrem jsou všechny globálně deklarované elementy.</para>
+        </listitem>
+      </orderedlist>
+
+      <para>Ostatní vlastnosti schématu (<property>attribute
+      declarations</property>, <property>model group definitions</property>,
+      <property>attribute group definitions</property>, <property>type
+      definitions</property>, <property>notation declarations</property>,
+      <property>annotations</property>) pro tvorbu logického modelu grafické
+      reprezentace takto přímo nevyužijeme; Xerces nám některé z nich poskytne
+      později skrze reference jako globálně definované typy, atributy,
+      elementy a jejich skupiny. Při vykreslování tedy vůbec nebudeme muset
+      pracovat s komponentami definice skupiny atributů (<emphasis>Attribute
+      group definition</emphasis>), definice modelové skupiny (<emphasis>Model
+      group definition</emphasis>) a deklarace notace (<emphasis>Notation
+      declaration</emphasis>), které jsou dostupné pouze ze schématu, a
+      nebudeme potřebovat ani anotace
+      (<emphasis>Annotation</emphasis>).</para>
+    </section>
+
+    <section id="PROCESS-ELEMENT-DECLARATIONS">
+      <title>Zpracování kolekce deklarací elementů</title>
+
+      <para>Kolekce deklarací elementů (v Xercesu obalené obecnou třídou
+      <classname>XSNamedMap</classname>).</para>
+
+      <para>Metoda
+      <methodname>processElementDeclarations</methodname>(<classname>XSNamedMap</classname>
+      <parameter>map</parameter>) provádí zpracování globálních deklarací
+      elementů. Metoda obsahuje cyklus.</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Prochází se kolekcí deklarací elementů:</para>
+
+          <orderedlist numeration="loweralpha" security="" spacing="compact">
+            <listitem>
+              <para>Pro každý prvek kolekce se volá
+              <methodname>processElementDeclaration</methodname>(<parameter>elementDeclaration</parameter>,
+              <literal>null</literal>) [<xref
+              linkend="PROCESS-ELEMENT-DECLARATION" />]. První parametr je
+              konkrétní deklarace elementu (<emphasis>Element
+              declaration</emphasis>), druhý je řetězec vyjadřující
+              kardinalitu elementu. V případě globální deklarace má vždy
+              hodnotu <literal>null</literal>.</para>
+            </listitem>
+          </orderedlist>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section id="PROCESS-ELEMENT-DECLARATION">
+      <title>Zpracování deklarace elementu<footnote>
+          <para><xref linkend="XSD1" /> <ulink
+          url="http://www.w3.org/TR/xmlschema-1/#cElement_Declarations">http://www.w3.org/TR/xmlschema-1/#cElement_Declarations</ulink></para>
+        </footnote></title>
+
+      <para>Deklarace elementu (<emphasis>Element declaration</emphasis>, v
+      Xercesu třída <classname>XSElementDeclaration</classname>)
+      umožňuje:</para>
+
+      <itemizedlist spacing="compact">
+        <listitem>
+          <para>lokální validaci hodnot informační položky element za použití
+          definice typu;</para>
+        </listitem>
+
+        <listitem>
+          <para>specifikování defaultních nebo fixních hodnot pro informační
+          položku element;</para>
+        </listitem>
+
+        <listitem>
+          <para>zajištění jedinečnosti hodnot a nastavení referenčních omezení
+          v rámci hodnot příbuzných elementů a atributů;</para>
+        </listitem>
+
+        <listitem>
+          <para>kontrolování vzájemné nahraditelnosti elementů pomocí
+          mechanismu substitučních skupin (<emphasis>element substitution
+          groups</emphasis>).</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Metoda
+      <methodname>processElementDeclaration</methodname>(<classname>XSElementDeclaration</classname>
+      <parameter>elementDeclaration</parameter>, <classname>String</classname>
+      <parameter>cardinality</parameter>) zpracuje deklaraci elementu:</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Dojde k vytvoření symbolu <xref lang=""
+          linkend="SYMBOL-ELEMENT" /> a jeho připojení na odpovídající místo
+          stromové struktury. U symbolu je třeba nastavit základní informace,
+          poskytované přímo objektem
+          <parameter>elementDeclaration</parameter>, ale také některé
+          dodatečné informace, například řetězec s typem elementu, získaný
+          voláním pomocné metody
+          <methodname>getTypeString</methodname>(<parameter>typeDefinition</parameter>)
+          [<xref linkend="PROCESS-SIMPLE-TYPE" />], a řetězec uvádějící
+          minimální a maximální počet výskytů, získaný z parametru
+          <parameter>cardinality</parameter>. Popis jednotlivých položek
+          naleznete u grafického návrhu symbolu
+          <literal>element</literal>.</para>
+        </listitem>
+
+        <listitem>
+          <para>Zjišťuje se, zda se stejná deklarace nevyskytuje mezi předky
+          této deklarace. Došlo by k zacyklení a vykreslování modelu by se
+          nikdy řádně neukončilo. Kontrolu provádí metoda
+          <methodname>processLoop</methodname>(<classname>XSElementDeclaration</classname>
+          <parameter>elementDeclaration</parameter>), která má za úkol v
+          případě objevení cyklu připojit symbol <xref
+          linkend="SYMBOL-LOOP" /> a zastavit zpracování následníků.</para>
+        </listitem>
+
+        <listitem>
+          <para>Pokud má element komplexní datový typ, proběhne na tomto místě
+          zpracování jeho definice. To obstarává metoda
+          <methodname>processComplexTypeDefinition</methodname>(<parameter>complexTypeDefinition</parameter>)
+          [<xref linkend="PROCESS-COMPLEX-TYPE" />]</para>
+        </listitem>
+
+        <listitem>
+          <para>Bude volána pomocná metoda
+          <methodname>processIdentityConstraints</methodname>(<parameter>IdentityConstraints</parameter>)
+          [<xref lang="" linkend="PROCESS-IDENTITY-CONSTRAINTS" />],
+          parametrem jsou všechna identitní omezení definovaná v rámci této
+          deklarace.</para>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section id="PROCESS-ATTRIBUTE-USES">
+      <title>Zpracování kolekce užití atributů</title>
+
+      <para>Kolekce užití atributů (v Xercesu obalené obecnou třídou
+      <classname>XSObjectList</classname>).</para>
+
+      <para>Metoda
+      <methodname>processAttributeUses</methodname>(<classname>XSObjectList</classname>
+      <parameter>attributeUses</parameter>) provádí zpracování kolekce užití
+      atributů. Metoda obsahuje cyklus.</para>
+
+      <orderedlist>
+        <listitem>
+          <para>Prochází se kolekcí:</para>
+
+          <orderedlist numeration="loweralpha" spacing="compact">
+            <listitem>
+              <para>Pro každý prvek kolekce se volá metoda
+              <methodname>processAttributeUse</methodname>(<parameter>attributeUse</parameter>)
+              [<xref linkend="PROCESS-ATTRIBUTE-USE" />]. Parametr je
+              konkrétní užití atributu (<emphasis>Attribute
+              use</emphasis>).</para>
+            </listitem>
+          </orderedlist>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section id="PROCESS-ATTRIBUTE-USE">
+      <title>Zpracování užití atributu<footnote>
+          <para><xref linkend="XSD1" /> <ulink
+          url="http://www.w3.org/TR/xmlschema-1/#cAttributeUse">http://www.w3.org/TR/xmlschema-1/#cAttributeUse</ulink></para>
+        </footnote></title>
+
+      <para>Užití atributu (<emphasis>Attribute use</emphasis>, v Xercesu
+      třída <classname>XSAttributeUse</classname>) je pomocná komponenta,
+      která kontroluje výskyt a defaultní chování deklarace atributu. Pro
+      deklaraci atributu plní v rámci komplexního typu podobnou úlohu jako
+      částice (<emphasis>Particle</emphasis>) pro deklaraci elementu.</para>
+
+      <para>Metoda
+      <methodname>processAttributeUse</methodname>(<classname>XSAttributeUse</classname>
+      <parameter>attributeUse</parameter>) slouží ke zpracování užití atributu
+      a zároveň i samotné deklarace atributu:</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Na tomto místě proběhne zpracování deklarace atributu [<xref
+          linkend="PROCESS-ATTRIBUTE-DECLARATION" />].</para>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section id="PROCESS-ATTRIBUTE-DECLARATION">
+      <title>Zpracování deklarace atributu<footnote>
+          <para><xref linkend="XSD1" /> <ulink
+          url="http://www.w3.org/TR/xmlschema-1/#cAttribute_Declarations">http://www.w3.org/TR/xmlschema-1/#cAttribute_Declarations</ulink></para>
+        </footnote></title>
+
+      <para>Deklarace atributu (<emphasis>Attribute declaration</emphasis>, v
+      Xercesu třída <classname>XSAttributeDeclaration</classname>)
+      umožňuje:</para>
+
+      <itemizedlist spacing="compact">
+        <listitem>
+          <para>lokální validaci hodnot informační položky atribut za použití
+          definice jednoduchého typu;</para>
+        </listitem>
+
+        <listitem>
+          <para>specifikování defaultních nebo fixních hodnot pro informační
+          položku atribut.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Pro jednoduchost je deklarace atributu zpracována uvnitř metody
+      <methodname>processAttributeUse</methodname>(<classname>XSAttributeUse</classname>
+      <parameter>attributeUse</parameter>) [<xref
+      linkend="PROCESS-ATTRIBUTE-USE" />].</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Dojde k vytvoření symbolu <xref linkend="SYMBOL-ATTRIBUTE" />
+          a jeho připojení do stromové struktury. Předtím se musí zjistit
+          základní informace, poskytované přímo deklarací atributu, a také
+          dodatečná informace o typu atributu, získaná voláním pomocné metody
+          <methodname>getTypeString</methodname>(<parameter>typeDefinition</parameter>)
+          [<xref linkend="PROCESS-SIMPLE-TYPE" />]. Popis jednotlivých položek
+          naleznete u grafického návrhu symbolu
+          <literal>attribute</literal>.</para>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section id="PROCESS-WILDCARD">
+      <title>Zpracování divoké karty<footnote>
+          <para><xref linkend="XSD1" /> <ulink
+          url="http://www.w3.org/TR/xmlschema-1/#Wildcards">http://www.w3.org/TR/xmlschema-1/#Wildcards</ulink></para>
+        </footnote></title>
+
+      <para>Divoká karta (<emphasis>Wildcard</emphasis>, v Xercesu třída
+      <classname>XSWildcard</classname>) umožňuje validaci informačních
+      položek element a atribut, závisející na jmenném prostoru, ale
+      nezávislou na lokálním jméně.</para>
+
+      <para>Metoda
+      <methodname>processElementWildcard</methodname>(<classname>XSWildcard</classname>
+      <parameter>wildcard</parameter>, <classname>String</classname>
+      <parameter>cardinality</parameter>) slouží ke zpracování divoké karty
+      pro element:</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Vytvoří symbol <xref linkend="SYMBOL-ANY" /> a připojí ho na
+          odpovídající pozici ve stromové struktuře. Pomocná metoda
+          <methodname>getNamespaceString</methodname>(<classname>XSWildcard</classname>
+          <parameter>wildcard</parameter>) umožní sestavit řetězec, uvádějící
+          omezení jmenných prostorů, parametr <literal>cardinality</literal>
+          dodá informaci o minimálním a maximálním počtu výskytů.</para>
+        </listitem>
+      </orderedlist>
+
+      <para>Metoda
+      <methodname>processAttributeWildcard</methodname>(<classname>XSWildcard</classname>
+      <parameter>wildcard</parameter>) slouží ke zpracování divoké karty pro
+      atribut:</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Vytvoří symbol <xref linkend="SYMBOL-ANY-ATTRIBUTE" /> a
+          připojí ho na odpovídající pozici ve stromové struktuře. Pomocná
+          metoda
+          <methodname>getNamespaceString</methodname>(<classname>XSWildcard</classname>
+          <parameter>wildcard</parameter>) umožní sestavit řetězec, uvádějící
+          omezení jmenných prostorů.</para>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section id="PROCESS-SIMPLE-TYPE">
+      <title>Zpracování definice jednoduchého typu<footnote>
+          <para><xref linkend="XSD1" /> <ulink
+          url="http://www.w3.org/TR/xmlschema-1/#Simple_Type_Definitions">http://www.w3.org/TR/xmlschema-1/#Simple_Type_Definitions</ulink></para>
+        </footnote></title>
+
+      <para>Definice jednoduchého typu (<emphasis>Simple type
+      definition</emphasis>, v Xercesu třída
+      <classname>XSSimpleTypeDefinition</classname>) umožňuje omezení
+      znakových informačních položek – dětí informačních položek element
+      a atribut.</para>
+
+      <para>Pomocná metoda
+      <methodname>getTypeString</methodname>(<classname>XSTypeDefinition</classname>
+      <parameter>typeDefinition</parameter>) je volána při zpracování
+      deklarací elementů a atributů. U jednoduchého typu je pouze třeba
+      zjistit název, nebo název základního typu a ten zobrazit jako typ
+      elementu / atributu.</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Pokud je typ pojmenovaný (může být i komplexní), vrátí jméno
+          typu.</para>
+        </listitem>
+
+        <listitem>
+          <para>Pokud je typ anonymní a zároveň je jednoduchý, vrátí jméno
+          základního typu, ze kterého je tento typ odvozen.</para>
+        </listitem>
+
+        <listitem>
+          <para>Jinak vrátí <literal>null</literal>.</para>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section id="PROCESS-COMPLEX-TYPE">
+      <title>Zpracování definice komplexního typu<footnote>
+          <para><xref linkend="XSD1" /> <ulink
+          url="http://www.w3.org/TR/xmlschema-1/#Complex_Type_Definitions">http://www.w3.org/TR/xmlschema-1/#Complex_Type_Definitions</ulink></para>
+        </footnote></title>
+
+      <para>Definice komplexního typu (<emphasis>Complex type
+      definition</emphasis>, v Xercesu třída
+      <classname>XSComplexTypeDefinition</classname>) umožňuje:</para>
+
+      <itemizedlist spacing="compact">
+        <listitem>
+          <para>omezení informačních položek element, přidáním deklarací
+          atributů, určujících výskyt a obsah atributů;</para>
+        </listitem>
+
+        <listitem>
+          <para>omezení informačních položek element tak, že musí mít buď
+          prázdný obsah, nebo musí vyhovět specifikovanému obsahu smíšenému,
+          nebo tvořenému pouze elementy; nebo omezuje znakové informační
+          položky tak, aby vyhověly specifikované definici jednoduchého
+          typu;</para>
+        </listitem>
+
+        <listitem>
+          <para>využití mechanismu hierarchie definic typů (<emphasis>Type
+          definition hierarchy</emphasis>) k odvození komplexního typu z
+          jiného jednoduchého či komplexního typu;</para>
+        </listitem>
+
+        <listitem>
+          <para>specifikování příspěvků k post-schema-validation infosetu
+          elementů;</para>
+        </listitem>
+
+        <listitem>
+          <para>omezení možnosti odvozovat další typy z tohoto komplexního
+          typu;</para>
+        </listitem>
+
+        <listitem>
+          <para>kontrolovat nahrazování elementů odvozeného typu za elementy
+          deklarované v modelu obsahu, který je tohoto komplexního
+          typu.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Definice komplexního typu je zpracována metodou
+      <methodname>processComplexTypeDefinition</methodname>(<classname>XSComplexTypeDefinition</classname>
+      <parameter>complexTypeDefinition</parameter>).</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Zjistí se, zda definice obsahuje částici
+          (<emphasis>Particle</emphasis>), pokud ano, volá se metoda
+          <methodname>processParticle</methodname>(<parameter>particle</parameter>)
+          [<xref lang="" linkend="PROCESS-PARTICLE" />]. Parametrem je částice
+          získaná z definice komplexního typu.</para>
+        </listitem>
+
+        <listitem>
+          <para>Volá se pomocná metoda
+          <methodname>processAttributeUses</methodname>(<parameter>attributeUses</parameter>)
+          [<xref lang="" linkend="PROCESS-ATTRIBUTE-USES" />], parametrem je
+          kolekce užití atributů.</para>
+        </listitem>
+
+        <listitem>
+          <para>Pokud je definována divoká karta
+          (<emphasis>Wildcard</emphasis>) pro atributy, zavolá se metoda
+          <methodname>processAttributeWildcard</methodname>(<parameter>wildcard</parameter>)
+          [<xref linkend="PROCESS-WILDCARD" />]. Parametrem je divoká karta
+          získaná z definice komplexního typu.</para>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section id="PROCESS-IDENTITY-CONSTRAINTS">
+      <title>Zpracování kolekce identitních omezení</title>
+
+      <para>Kolekce deklarací identitních omezení (v Xercesu obalené obecnou
+      třídou <classname>XSNamedMap</classname>).</para>
+
+      <para>Metoda
+      <methodname>processIdentityConstraints</methodname>(<classname>XSNamedMap</classname>
+      <parameter>identityConstraints</parameter>) provádí zpracování deklarací
+      identitních omezení. Metoda obsahuje cyklus.</para>
+
+      <orderedlist>
+        <listitem>
+          <para>Prochází se kolekcí:</para>
+
+          <orderedlist numeration="loweralpha" spacing="compact">
+            <listitem>
+              <para>Pro každý prvek kolekce se volá metoda
+              <methodname>processIdentityConstraintDefinition</methodname>(<parameter>identityConstraintDefinition</parameter>)
+              [<xref linkend="PROCESS-IDENTITY-CONSTRAINT" />]. Parametrem je
+              konkrétní definice identitního omezení
+              (<emphasis>Identity-constraint definition</emphasis>).</para>
+            </listitem>
+          </orderedlist>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section id="PROCESS-IDENTITY-CONSTRAINT">
+      <title>Zpracování definice identitního omezení<footnote>
+          <para><xref linkend="XSD1" /> <ulink
+          url="http://www.w3.org/TR/xmlschema-1/#cIdentity-constraint_Definitions">http://www.w3.org/TR/xmlschema-1/#cIdentity-constraint_Definitions</ulink></para>
+        </footnote></title>
+
+      <para>Definice identitního omezení (<emphasis>Identity-constraint
+      definition</emphasis>, v Xercesu třída
+      <classname>XSIDCDefinition</classname>) zajištuje jedinečnost a
+      referenční omezení v rámci hodnot množiny elementů a atributů.</para>
+
+      <para>Metoda
+      <methodname>processIdentityConstraintDefinition</methodname>(<classname>XSIDCDefinition</classname>
+      <parameter>identityConstraintDefinition</parameter>) má na starost
+      zpracování definice identitního omezení.</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Zjistí se kategorie této definice:</para>
+
+          <orderedlist numeration="loweralpha" spacing="compact">
+            <listitem>
+              <para>Pokud jde o unikátní klíč (<literal>unique</literal>),
+              vytvoří se symbol <xref linkend="SYMBOL-UNIQUE" />.</para>
+            </listitem>
+
+            <listitem>
+              <para>Pokud jde o primární klíč (<literal>key</literal>),
+              vytvoří se symbol <xref lang="" linkend="SYMBOL-KEY" />.</para>
+            </listitem>
+
+            <listitem>
+              <para>Pokud jde o cizí klíč (<literal>keyref</literal>), vytvoří
+              se symbol <xref linkend="SYMBOL-KEYREF" />.</para>
+            </listitem>
+          </orderedlist>
+        </listitem>
+
+        <listitem>
+          <para>Vytvoří se symbol <xref linkend="SYMBOL-SELECTOR" />.</para>
+        </listitem>
+
+        <listitem>
+          <para>Prochází se kolekcí polí (<literal>field</literal>):</para>
+
+          <orderedlist numeration="loweralpha" spacing="compact">
+            <listitem>
+              <para>Pro každý prvek kolekce se vytvoří symbol <xref lang=""
+              linkend="SYMBOL-FIELD" />.</para>
+            </listitem>
+          </orderedlist>
+        </listitem>
+      </orderedlist>
+
+      <para>Potřebné informace pro vykreslení všech symbolů poskytne přímo
+      objekt <parameter>identityConstraintDefinition</parameter>. Jejich
+      přehled naleznete u návrhu jednotlivých symbolů. Každý ze symbolů je
+      připojen na odpovídající místo stromové struktury.</para>
+    </section>
+
+    <section id="PROCESS-PARTICLES">
+      <title>Zpracování kolekce částic</title>
+
+      <para>Kolekce částic (v Xercesu obalené obecnou třídou
+      <classname>XSObjectList</classname>).</para>
+
+      <para>Metoda
+      <methodname>processParticles</methodname>(<classname>XSObjectList</classname>
+      <parameter>particles</parameter>) provádí zpracování kolekce částic.
+      Metoda obsahuje cyklus:</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Prochází se kolekcí částic:</para>
+
+          <orderedlist numeration="loweralpha" security="" spacing="compact">
+            <listitem>
+              <para>Pro každý prvek kolekce se volá
+              <methodname>processParticle</methodname>(<parameter>particle</parameter>)
+              [<xref linkend="PROCESS-PARTICLE" />]. Parametrem je konkrétní
+              částice (<emphasis>Particle</emphasis>).</para>
+            </listitem>
+          </orderedlist>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section id="PROCESS-PARTICLE">
+      <title>Zpracování částice<footnote>
+          <para><xref linkend="XSD1" /> <ulink
+          url="http://www.w3.org/TR/xmlschema-1/#cParticles">http://www.w3.org/TR/xmlschema-1/#cParticles</ulink></para>
+        </footnote></title>
+
+      <para>Částice (<emphasis>Particle</emphasis>, v Xercesu třída
+      <classname>XSParticle</classname>) přidává dodatečné informace o
+      minimálním a maximálním počtu výskytů k definici modelu obsahu.</para>
+
+      <para>Metoda
+      <methodname>processParticle</methodname>(<classname>XSParticle</classname>
+      <parameter>particle</parameter>) zpracuje částici následujícím
+      způsobem:</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Pomocná metoda
+          <methodname>getCardinalityString</methodname>(<classname>XSParticle</classname>
+          <parameter>particle</parameter>) sestaví řetězec
+          <literal>cardinality</literal>, obsahující informaci o minimálním
+          (<property>minOccurs</property>) a maximálním
+          (<property>maxOccurs</property>) počtu výskytů částicí obaleného
+          termínu (<property>term</property>).</para>
+        </listitem>
+
+        <listitem>
+          <para>Zavolá pomocnou metodu
+          <methodname>processTerm</methodname>(<parameter>term</parameter>,
+          <parameter>cardinality</parameter>) [<xref
+          linkend="PROCESS-TERM" />], která termín zpracuje, a pošle jí i
+          řetězec <literal>cardinality</literal>.</para>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section id="PROCESS-TERM">
+      <title>Zpracování termínu</title>
+
+      <para>Termín (<emphasis>Term</emphasis>, v Xercesu třída
+      <classname>XSTerm</classname>) je obecná vlastnost zastupující modelovou
+      skupinu, deklaraci elementu, nebo divokou kartu pro elementy.</para>
+
+      <para>Metoda
+      <methodname>processTerm</methodname>(<classname>XSTerm</classname>
+      <parameter>term</parameter>, <classname>String</classname>
+      <parameter>cardinality</parameter>) provádí tento algoritmus:</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Zjistí se typ termínu:</para>
+
+          <orderedlist numeration="loweralpha" spacing="compact">
+            <listitem>
+              <para>Pokud se jedná o modelovou skupinu (<emphasis>Model
+              group</emphasis>), volá se metoda
+              <methodname>processModelGroup</methodname>(<parameter>modelGroup</parameter>,
+              <parameter>cardinality</parameter>) [<xref lang=""
+              linkend="PROCESS-MODEL-GROUP" />]. Prvním parametrem je termín –
+              modelová skupina, druhým parametrem se předává dál informace o
+              kardinalitě.</para>
+            </listitem>
+
+            <listitem>
+              <para>Pokud jde o deklaraci elementu (<emphasis>Element
+              declaration</emphasis>), volá se
+              <methodname>processElementDeclaration</methodname>(<parameter>elementDeclaration</parameter>,
+              <parameter>cardinality</parameter>) [<xref
+              linkend="PROCESS-ELEMENT-DECLARATION" />]. Prvním parametrem je
+              termín – deklarace elementu, druhým parametrem se předává dál
+              informace o kardinalitě.</para>
+            </listitem>
+
+            <listitem>
+              <para>Pokud jde o divokou kartu (<emphasis>Wildcard</emphasis>)
+              pro elementy, volá se metoda
+              <methodname>processElementWildcard</methodname>(<parameter>wildcard</parameter>,
+              <parameter>cardinality</parameter>) [<xref
+              linkend="PROCESS-WILDCARD" />]. Prvním parametrem je termín –
+              divoká karta, druhým parametrem se předává dál informace o
+              kardinalitě.</para>
+            </listitem>
+          </orderedlist>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section id="PROCESS-MODEL-GROUP">
+      <title>Zpracování modelové skupiny<footnote>
+          <para><xref linkend="XSD1" /> <ulink
+          url="http://www.w3.org/TR/xmlschema-1/#Model_Groups">http://www.w3.org/TR/xmlschema-1/#Model_Groups</ulink></para>
+        </footnote></title>
+
+      <para>Modelová skupina (<emphasis>Model group</emphasis>, v Xercesu
+      třída <classname>XSModelGroup</classname>). Pokud není definováno, že
+      mají být děti informační položky element prázdné, nebo že mají vyhovovat
+      určité definici jednoduchého typu, může být obsah posloupnosti dětí
+      informační položky element specifikován detailněji pomocí modelové
+      skupiny. Díky tomu, že součástí částice může být modelová skupina a
+      modelová skupina obsahuje částice, může modelová skupina nepřímo
+      obsahovat jiné modelové skupiny.</para>
+
+      <para>Metoda
+      <methodname>processModelGroup</methodname>(<classname>XSModelGroup</classname>
+      <parameter>modelGroup</parameter>, <classname>String</classname>
+      <parameter>cardinality</parameter>) provádí algoritmus:</para>
+
+      <orderedlist spacing="compact">
+        <listitem>
+          <para>Zjistí se typ kompozitoru
+          (<property>compositor</property>):</para>
+
+          <orderedlist numeration="loweralpha" spacing="compact">
+            <listitem>
+              <para>Pokud se jedná o kompozitor <literal>all</literal>,
+              vytvoří se symbol <xref linkend="SYMBOL-ALL" />.</para>
+            </listitem>
+
+            <listitem>
+              <para>Pokud jde o kompozitor <literal>choice</literal>, vytvoří
+              se symbol <xref linkend="SYMBOL-CHOICE" />.</para>
+            </listitem>
+
+            <listitem>
+              <para>Jinak jde o kompozitor <literal>sequence</literal>,
+              vytvoří se symbol <xref linkend="SYMBOL-SEQUENCE" />.</para>
+            </listitem>
+          </orderedlist>
+        </listitem>
+
+        <listitem>
+          <para>Zavolá se pomocná metoda
+          <methodname>processParticles</methodname>(<parameter>particles</parameter>)
+          [<xref lang="" linkend="PROCESS-PARTICLES" />], parametrem je
+          kolekce částic, obsažených uvnitř modelové skupiny.</para>
+        </listitem>
+      </orderedlist>
+
+      <para>U každého ze symbolů bude vypsán řetězec
+      <literal>cardinality</literal> s informací o minimálním a maximálním
+      počtu výskytů. Vytvořený symbol je vždy připojen na odpovídající pozici
+      stromové struktury.</para>
+
+      <bridgehead>Konečné uložení připravené struktury do SVG</bridgehead>
+
+      <para>Poté, co se dokončí procházení abstraktního datového modelu XML
+      schématu a připravené symboly utvoří stromovou strukturu, dojde k
+      uložení stromu do SVG souboru. Nejprve se vypíše jakási hlavička s XML
+      deklarací, doctypem, titulkem, přidá se skript, předem definované
+      symboly a popřípadě styl; následují jednotlivé symboly komponent. Přesný
+      průběh vypadá tak, že se vezme kořenový symbol, nastaví se u něj správné
+      rozměry a umístění na pomyslném plátně a uloží se, totéž se pak opakuje
+      se všemi dětmi a jejich potomky, až se dojde k listům stromu. Tím jsou
+      symboly vloženy do souboru a následuje už jen koncový tag
+      <sgmltag>&lt;svg&gt;</sgmltag>.</para>
+    </section>
+  </chapter>
+
+  <chapter>
+    <title>Závěr</title>
+
+    <para>Cílem práce bylo navrhnout a implementovat aplikaci pro převod XML
+    schématu do interaktivního diagramu ve formátu SVG. Bylo proto třeba
+    nastudovat principy, na kterých staví specifikace W3C XML schématu. Ta
+    silně odděluje abstraktní datový model od XML reprezentace. Právě
+    abstraktní datový model, jeho komponenty a vlastnosti komponent poskytují
+    přímý a jednoduchý přístup k důležitým údajům. Abych nemusel vše
+    programovat od začátku, vybíral jsem mezi hotovými open source
+    implementacemi modelu a zvolil procesor tvořící součást parseru Xerces.
+    Ten vyhovuje specifikaci; zpřístupnil komponenty schématu a jejich
+    struktury programovým prostředkům jazyka Java.</para>
+
+    <para>Dále bylo třeba rozhodnout se pro vhodný způsob zobrazení struktur
+    definovaných schématem. Zde jsem se inspiroval výstupy úspěšného XML
+    editoru oXygen. Z představy grafického modelu vzešel návrh tříd objektů –
+    obecného abstraktního symbolu a konkrétních symbolů komponent schématu –,
+    návrh jejich vzhledu, parametrů a propojení i ve vazbě k zajištění
+    interaktivity modelu. Přitom bylo nutné alespoň v základu poznat možnosti
+    formátu SVG.</para>
+
+    <para>Po načtení instance XML schématu do objektové reprezentace jazyka
+    Java se spustí procházení těmito objekty a začne se vytvářet stromová
+    struktura definovaných symbolů. Ta je nakonec uložena do SVG souboru. Na
+    něj jsou ale ještě vázány další technologie. Především jde o ECMAScript,
+    který je součástí souboru a provádí jeho zpracování při otevření v
+    prohlížeči. Zajišťuje interaktivitu reakcemi na události spuštěné pohybem
+    a klikáním myši. Aby skript mohl pracovat s elementy SVG dokumentu,
+    potřebuje k nim získat přístup. Přístup zajišťuje DOM úrovně 2. Poslední
+    technologií jsou kaskádové styly, které mohou tvořit součást SVG souboru
+    nebo mohou být připojeny z externího souboru a umožňují drobné úpravy
+    výsledného vzhledu.</para>
+
+    <para>Na závěr mohu konstatovat, že se podařilo splnit cíl práce.
+    Praktickým produktem je funkční program, jehož výstupem je přehledný,
+    interaktivní diagram zobrazující strukturu XML souborů, vyhovujících
+    schématu. Konkrétně je to struktura použitelných elementů a atributů,
+    jejich jména, jmenné prostory, datové typy, kardinalita elementů,
+    definované klíče atd. Postromy symbolů lze zobrazovat a skrývat. Dle mého
+    názoru může diagram skutečně usnadnit orientaci a pochopení struktur, může
+    tvořit kvalitní doplněk dokumentace.</para>
+
+    <para>I zde však existují určitá omezení. První vyplývá z pomalé
+    implementce SVG a ECMAScriptu v prohlížečích. Projevuje se v pomalejší
+    reakci na události a obecně v pomalejším vykreslování velkých diagramů. V
+    této oblasti lze jen doufat, že do budoucna vznikne lepší podpora. Další
+    problém se může vyskytnout při programovém zpracování schémat,
+    popisujících velmi rozsáhlé struktury. Může dojít k pádu aplikace v
+    důsledku překročení paměťového prostoru. Tento problém lze odstranit
+    úpravou aplikace, vzhledem k prvnímu omezení však není nutné s úpravou moc
+    spěchat.</para>
+
+    <para>Tím se dostávám k faktu, že aplikace včetně zdrojových kódů bude
+    šířena jako svobodný software. Momentálně je dostupná na přiloženém CD
+    (viz <xref linkend="CD" />) a na webové stránce <ulink
+    url="http://st.vse.cz/~XSLAV14/">http://st.vse.cz/~XSLAV14/</ulink>. To
+    přináší možnost budoucího rozvoje aplikace v podobě vylepšování nebo
+    rozšiřování funkčnosti. Například by šla přidělat tlačítka pro zoom in a
+    zoom out; rozšířit program o podporu dalších schémových jazyků (pokud vím,
+    je jejich vizualizace předmětem jiných bakalářských prací); nebo
+    integrovat do systému pro generování kompletních dokumentací.</para>
+  </chapter>
+
+  <bibliography>
+    <title>Literatura</title>
+
+    <bibliodiv>
+      <bridgehead>Hlavní</bridgehead>
+
+      <bibliomixed id="XSD0">Fallside, D. C., Walmsley, P. a kol.:
+      <title><emphasis>XML Schema Part 0: Primer Second
+      Edition</emphasis></title> [online]. W3C, 2004. <bibliomisc>Dostupný
+      z WWW: <ulink
+      url="http://www.w3.org/TR/xmlschema-0/"></ulink></bibliomisc></bibliomixed>
+
+      <bibliomixed id="XSD1">Thompson, H. S., Beech, D., Maloney, M.,
+      Mendelsohn, N. a kol.: <title><emphasis>XML Schema Part 1: Structures
+      Second Edition</emphasis></title> [online]. W3C, 2004.
+      <bibliomisc>Dostupný z WWW: <ulink
+      url="http://www.w3.org/TR/xmlschema-1/"></ulink></bibliomisc></bibliomixed>
+
+      <bibliomixed id="XSD2">Biron, P. V., Malhotra, A. a kol.:
+      <title><emphasis>XML Schema Part 2: Datatypes Second
+      Edition</emphasis></title> [online]. W3C, 2004. <bibliomisc>Dostupný
+      z WWW: <ulink
+      url="http://www.w3.org/TR/xmlschema-2/"></ulink></bibliomisc></bibliomixed>
+
+      <bibliomixed id="XSD-VLIST">van der Vlist, E.: <title><emphasis
+      id="VLIST">Using W3C XML Schema</emphasis></title>. XML.com, 2001.
+      <bibliomisc>Dostupný z WWW: <ulink
+      url="http://www.xml.com/pub/a/2000/11/29/schemas/part1.html?page=1"></ulink></bibliomisc></bibliomixed>
+
+      <bibliomixed id="SVG">Ferraiolo, J., Fujisawa, J., Jackson, D.:
+      <title><emphasis>Scalable Vector Graphics (SVG) 1.1
+      Specification</emphasis></title> [online]. W3C, 2003.
+      <bibliomisc>Dostupný z WWW: <ulink
+      url="http://www.w3.org/TR/SVG/"></ulink></bibliomisc></bibliomixed>
+    </bibliodiv>
+
+    <bibliodiv>
+      <bridgehead>Vedlejší a doplňková</bridgehead>
+
+      <bibliomixed id="XML">Bray, T., Paoli, J., Sperberg-McQueen, C. M.,
+      Maler, E., Yergeau, F. a kol.: <title><emphasis>Extensible Markup
+      Language (XML) 1.0 (Fourth Edition)</emphasis></title> [online]. W3C,
+      2006. <bibliomisc>Dostupný z WWW: <ulink
+      url="http://www.w3.org/TR/REC-xml/"></ulink></bibliomisc></bibliomixed>
+
+      <bibliomixed id="INFOSET">Cowan, J., Tobin, R.: <title><emphasis>XML
+      Information Set (Second Edition)</emphasis></title> [online]. W3C, 2004.
+      <bibliomisc>Dostupný z WWW: <ulink
+      url="http://www.w3.org/TR/xml-infoset/"></ulink></bibliomisc></bibliomixed>
+
+      <bibliomixed id="NAMESPACE">Bray, T., Hollander, D., Layman, A., Tobin,
+      R.: <title><emphasis>Namespaces in XML 1.0 (Second
+      Edition)</emphasis></title> [online]. W3C, 2006. <bibliomisc>Dostupný
+      z WWW: <ulink
+      url="http://www.w3.org/TR/REC-xml-names/"></ulink></bibliomisc></bibliomixed>
+
+      <bibliomixed id="DOM1">Wood, L. a kol.: <title><emphasis>Document Object
+      Model (DOM) Level 1 Specification</emphasis></title> [online]. W3C,
+      1998. <bibliomisc>Dostupný z WWW: <ulink
+      url="http://www.w3.org/TR/REC-DOM-Level-1/"></ulink></bibliomisc></bibliomixed>
+
+      <bibliomixed id="DOM2">Wood, L. a kol.: <title><emphasis>Document Object
+      Model (DOM) Level 2 Core Specification</emphasis></title> [online]. W3C,
+      2000. <bibliomisc>Dostupný z WWW: <ulink
+      url="http://www.w3.org/TR/DOM-Level-2-Core/"></ulink></bibliomisc></bibliomixed>
+
+      <bibliomixed id="CSS">Lie, H. W., Bos, B.: <title><emphasis>Cascading
+      Style Sheets, level 1</emphasis></title> [online]. W3C, 1996.
+      <bibliomisc>Dostupný z WWW: <ulink
+      url="http://www.w3.org/TR/CSS1/"></ulink></bibliomisc></bibliomixed>
+
+      <bibliomixed id="M254">Hall, W., Keynes, M.: <title><emphasis>M254 Java
+      everywhere</emphasis></title> [online]. The Open University, 2005.
+      <bibliomisc>Dostupný z WWW: <ulink
+      url="http://computing.open.ac.uk/m254/"></ulink></bibliomisc></bibliomixed>
+    </bibliodiv>
+  </bibliography>
+
+  <appendix>
+    <title>Termíny</title>
+
+    <glosslist>
+      <glossentry>
+        <glossterm>API</glossterm>
+
+        <glossdef>
+          <para><emphasis>Application Programming Interface</emphasis>,
+          rozhraní aplikačních programů. Sada procedur, funkcí nebo tříd
+          určité knihovny, programu nebo jádra operačního systému, která může
+          být využita v aplikacích.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>CSS</glossterm>
+
+        <glossdef>
+          <para><emphasis>Cascading Style Sheets</emphasis>, kaskádové styly.
+          Jednoduchý mechanismus pro přidání grafické úpravy webovým
+          dokumentům. Standard organizace W3C mimo jiné v <xref
+          linkend="CSS" />.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>Data binding</glossterm>
+
+        <glossdef>
+          <para>Převod dat mezi různými formáty. Například mezi XML dokumenty,
+          objekty objektově orientovaných systémů a relačními tabulkami
+          databázových systémů.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>DOM</glossterm>
+
+        <glossdef>
+          <para><emphasis>Document Object Model</emphasis>, objektový model
+          dokumentu. Rozhraní nezávislé na platformě a jazyku, které umožňuje
+          programům a skriptům dynamický přístup k obsahu, struktuře a stylu
+          dokumentu a jeho editaci. Poskytuje objektově orientovanou
+          reprezentaci XML nebo HTML dokumentu. Specifikace W3C v <xref
+          linkend="DOM1" />, <xref linkend="DOM2" /> a dalších.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>DTD</glossterm>
+
+        <glossdef>
+          <para><emphasis>Document Type Definition</emphasis>, definice typu
+          dokumentu. DTD poskytuje nástroje pro definování povolených struktur
+          elementů a atributů, umožňuje stanovení implicitních hodnot
+          atributů. V rámci DTD lze také definovat znovupoužitelný obsah
+          (entity) a dodatečné informace (notace). Specifikace je součástí
+          doporučení organizace W3C o XML – <xref linkend="XML" /> a
+          další.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>ECMAScript</glossterm>
+
+        <glossdef>
+          <para>Skriptovací (programovací) jazyk, standardizován organizací
+          <emphasis>Ecma International</emphasis> ve specifikaci
+          <emphasis>ECMA-262</emphasis>. Je široce používán na webu a bývá
+          často označován jako JavaScript nebo JScript, podle hlavních
+          dialektů tohoto jazyka.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>Framework</glossterm>
+
+        <glossdef>
+          <para>Základní konceptuální struktura užívaná k řešení nebo zaměření
+          se na komplexní problémy. V oblasti softwaru se často jedná
+          o knihovny, podpůrné programy, návrhové vzory a doporučené postupy.
+          Framework řeší typické úlohy, které jsou ve většině aplikací shodné,
+          a usnadňuje tak vývoj.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>HTML</glossterm>
+
+        <glossdef>
+          <para><emphasis>HyperText Markup Language</emphasis>, hypertextový
+          značkovací jazyk. Jazyk pro tvorbu webových stránek, aplikace SGML.
+          Specifikaci vydala organizace W3C.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>Informační položka</glossterm>
+
+        <glossdef>
+          <para><emphasis>Information item</emphasis>. Představuje uzel
+          stromové struktury XML infosetu. Specifikace <xref
+          linkend="INFOSET" /> definuje jedenáct různých typů položek. Každá
+          má určité vlastnosti jako je rodičovský element, lokální jméno atd.
+          V této práci se zmiňuji o znakové informační položce, informační
+          položce element a atribut.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>Infoset</glossterm>
+
+        <glossdef>
+          <para><emphasis>XML Information Set</emphasis> je abstraktní datový
+          model XML dokumentu, skládá se z jednotlivých informačních položek.
+          Specifikace W3C <xref linkend="INFOSET" />.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>Java</glossterm>
+
+        <glossdef>
+          <para>Objektově orientovaný, silně typový, na platformě nezávislý
+          programovací jazyk od společnosti <emphasis>Sun
+          Microsystems</emphasis>.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>Namespace</glossterm>
+
+        <glossdef>
+          <para>Jmenný prostor. XML poskytuje jednoduchou metodu pro
+          kvalifikování jmen elementů a atributů jejich zařazením do jmenného
+          prostoru s URI identifikátorem. Specifikace W3C <xref
+          linkend="NAMESPACE" />.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>Parsování</glossterm>
+
+        <glossdef>
+          <para>Analýza předložených dat a vyhledávání prvků odpovídajících
+          definici určitého jazyka. Obvykle jde o syntaktickou analýzu
+          zdrojových kódů napsaných v daném programovacím jazyce.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>PSVI</glossterm>
+
+        <glossdef>
+          <para><emphasis>Post Schema Validation Infoset</emphasis>, infoset
+          po validaci dokumentu oproti schématu. Je to infoset XML dokumentu
+          rozšířený o informace o datových typech položek. Příspěvky k PSVI
+          jsou definovány ve specifikaci XML schématu <xref linkend="XSD1" />
+          a <xref linkend="XSD2" />.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>Renderování</glossterm>
+
+        <glossdef>
+          <para><emphasis>Rendering</emphasis>, proces, při němž se vykresluje
+          obraz ze zadaných dat.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>SAX</glossterm>
+
+        <glossdef>
+          <para><emphasis>Simple API for XML</emphasis>, jednoduché aplikační
+          rozhraní pro XML. Poskytuje mechanismus pro čtení dat z XML
+          dokumentů. Čtení probíhá sekvenčně a je založeno na událostech
+          (přečtení počátečního tagu, přečtení ukončujícího tagu atd.) Není
+          proto možná modifikace struktury dokumentu, na rozdíl od DOM.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>SVG</glossterm>
+
+        <glossdef>
+          <para><emphasis>Scalable Vector Graphics</emphasis>, škálovatelná
+          vektorová grafika. SVG je jazyk pro popis dvourozměrné grafiky a
+          grafických aplikací pomocí XML. Základ vývoje tvoří specifikace SVG
+          1.1, vydaná jako doporučení konsorcia W3C 14. ledna 2003 <xref
+          linkend="SVG" />.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>Tag</glossterm>
+
+        <glossdef>
+          <para><emphasis>Značka</emphasis> vymezující začátek a/nebo konec
+          elementu.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>Validace</glossterm>
+
+        <glossdef>
+          <para>Ověření shody XML dokumentu se schématem.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>W3C</glossterm>
+
+        <glossdef>
+          <para><emphasis>World Wide Web Consortium</emphasis>. Zabývá se
+          vývojem interoperabilních technologií – specifikací, směrnic,
+          softwaru a nástrojů – s cílem sjednotit používané technologie
+          a dosáhnout plného rozvoje a využití možností webu.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>XHTML</glossterm>
+
+        <glossdef>
+          <para><emphasis>Extensible HyperText Markup Language</emphasis>,
+          rozšiřitelný hypertextový značkovací jazyk. Jazyk pro tvorbu
+          webových stránek, aplikace XML. Specifikaci vydala organizace
+          W3C.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>XML</glossterm>
+
+        <glossdef>
+          <para><emphasis>Extensible Markup Language</emphasis>, rozšiřitelný
+          značkovací jazyk. Umožňuje vývojářům vytvářet vlastní formáty pro
+          uchování a sdílení dat. Specifikaci vydalo konsorcium W3C, <xref
+          linkend="XML" /> a další.</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>XML schéma</glossterm>
+
+        <glossdef>
+          <para>XML schémata poskytují prostředky pro definování struktury,
+          obsahu a sémantiky XML dokumentů. XML schéma bylo schváleno jako
+          doporučení organizace W3C 2. května 2001 a druhá, upravená verze
+          byla vydána 28. října 2004 <xref linkend="XSD0" />, <xref
+          linkend="XSD1" />, <xref linkend="XSD2" />.</para>
+        </glossdef>
+      </glossentry>
+    </glosslist>
+  </appendix>
+
+  <appendix id="CD">
+    <title>Obsah CD-ROM</title>
+
+    <para>Součástí této práce je přiložený CD-ROM s textem práce, zdrojovými
+    kódy a hotovou aplikací. Poslední verze bude přístupná na webové stránce:
+    <ulink
+    url="http://st.vse.cz/~XSLAV14/">http://st.vse.cz/~XSLAV14/</ulink>.
+    Konkrétně na CD naleznete následující strukturu adresářů a souborů:</para>
+
+    <orderedlist>
+      <listitem>
+        <para><filename>/thesis</filename> – adresář týkající se psaní
+        bakalářské práce, obsahuje:</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para><filename>/images</filename> – složka použitých obrázků
+            kromě symbolů komponent schématu</para>
+          </listitem>
+
+          <listitem>
+            <para><filename>/symbols</filename> – složka s obrázky symbolů
+            komponent schématu ve formátu SVG</para>
+          </listitem>
+
+          <listitem>
+            <para><filename>thesis.xml</filename> – vlastní text práce ve
+            formátu DocBook</para>
+          </listitem>
+
+          <listitem>
+            <para><filename>thesis.xsl</filename>,
+            <filename>tp-fo.xsl</filename> – styly upravující standardní
+            výstup DocBooku</para>
+          </listitem>
+
+          <listitem>
+            <para><filename>kizi.pdf</filename> – logo katedry pro titulní
+            stranu<footnote>
+                <para>Upravené styly a logo katedry pochází ze stránek Jiřího
+                Koska, věnovaných výuce na VŠE: <ulink
+                url="http://www.kosek.cz/vyuka/">http://www.kosek.cz/vyuka/</ulink>.</para>
+              </footnote></para>
+          </listitem>
+
+          <listitem>
+            <para><filename>thesis.pdf</filename> – vygenerované PDF s touto
+            prací</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><filename>/src</filename> – adresář zdrojových kódů Javy,
+        struktura vychází ze zařazení tříd do balíčků</para>
+      </listitem>
+
+      <listitem>
+        <para><filename>/res</filename> – adresář dalších zdrojů
+        obsahující:</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para><filename>/examples</filename> – složka s příklady XSD
+            vstupů</para>
+          </listitem>
+
+          <listitem>
+            <para><filename>/licenses</filename> – složka s licencemi parseru
+            Xerces</para>
+          </listitem>
+
+          <listitem>
+            <para><filename>readme.txt</filename> – textový dokument, popisuje
+            uživatelské rozhraní</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><filename>/lib</filename> – adresář obsahuje implementaci
+        parseru Xerces – <filename>xercesImpl.jar</filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>/dist</filename> – složka s aplikací připravenou k
+        použití, obsahuje:</para>
+
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para><filename>/examples</filename> – překopírováno z adresáře
+            <filename>/res</filename></para>
+          </listitem>
+
+          <listitem>
+            <para><filename>/licenses</filename> – překopírováno z adresáře
+            <filename>/res</filename></para>
+          </listitem>
+
+          <listitem>
+            <para><filename>/lib</filename> – adresář knihoven:</para>
+
+            <orderedlist spacing="compact">
+              <listitem>
+                <para>kopie souboru <filename>xercesImpl.jar</filename> a
+                případných dalších z adresáře <filename>/lib</filename></para>
+              </listitem>
+
+              <listitem>
+                <para>archiv s vlastní aplikací
+                <filename>xsdvi.jar</filename></para>
+              </listitem>
+            </orderedlist>
+          </listitem>
+
+          <listitem>
+            <para><filename>examples.bat</filename> – spouští transformaci
+            příkladů, schémat ze složky examples</para>
+          </listitem>
+
+          <listitem>
+            <para><filename>readme.txt</filename> – překopírováno z adresáře
+            <filename>/res</filename></para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para><filename>build.properties</filename> – nastavení vlastností
+        využívaných v <filename>build.xml</filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>build.xml</filename> – XML skript pro sestavovací
+        program Ant</para>
+      </listitem>
+    </orderedlist>
+  </appendix>
+
+  <appendix id="EXAMPLES">
+    <title>Příklad</title>
+
+    <section>
+      <title>XML schéma – ukázkový vstup</title>
+
+      <programlisting>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"&gt;
+
+    &lt;xs:element name="contact" type="ContactType"/&gt;
+    
+    &lt;xs:complexType name="ContactType"&gt;
+        &lt;xs:sequence&gt;
+            &lt;xs:element name="phone" type="xs:string"/&gt;
+            &lt;xs:element name="address" type="AddressType"/&gt;
+        &lt;/xs:sequence&gt;
+    &lt;/xs:complexType&gt;
+    
+    &lt;xs:complexType name="AddressType"&gt;
+        &lt;xs:sequence&gt;
+            &lt;xs:element name="name" type="xs:string"/&gt;
+            &lt;xs:element name="street" type="xs:string"/&gt;
+            &lt;xs:element name="city" type="xs:string"/&gt;
+        &lt;/xs:sequence&gt;
+    &lt;/xs:complexType&gt;
+
+&lt;/xs:schema&gt;</programlisting>
+    </section>
+
+    <section id="EXAMPLES-SVG-XML">
+      <title>SVG výstup (XML reprezentace)</title>
+
+      <programlisting>&lt;?xml version='1.0' encoding='UTF-8'?&gt;
+&lt;!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN'
+  'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'&gt;
+&lt;svg id='svg' onload='loadSVG();'
+  xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'&gt;
+&lt;title&gt;XsdVi&lt;/title&gt;
+
+&lt;script type='text/ecmascript'&gt;&lt;![CDATA[
+  var efBoxes = [];
+  var eSvg = null;
+  function loadSVG() {
+    efBoxes = getElementsByClassName('box', document.getElementsByTagName('g'));
+    eSvg = document.getElementById('svg');
+    expandAll();
+  }
+
+  function getElementsByClassName(sClass, nlNodes) {
+    var elements = [];
+    for (var i=0; i&lt;nlNodes.length; i++) {
+      if(nlNodes.item(i).nodeType==1
+        &amp;&amp; sClass==nlNodes.item(i).getAttribute('class')) {
+        elements.push(nlNodes.item(i));
+      }
+    }
+    return elements;
+  }
+
+  function show(sId) {
+    var useElement = document.getElementById('s'+sId);
+    var moveNext = false;
+    var eBoxLast;
+    var maxX = 500;
+    
+    if (notPlus(useElement)) {
+      eBoxLast = document.getElementById(sId);
+      setPlus(useElement);
+      for (var i=0; i&lt;efBoxes.length; i++) {
+        var eBox = efBoxes[i];
+        if (moveNext) {
+          move(eBoxLast, eBox);
+        }
+        else if (isDescendant(sId, eBox.id)) {
+          eBox.setAttribute('visibility', 'hidden');
+        }
+        else if (isHigherBranch(sId, eBox.id)) {
+          move(eBoxLast, eBox);
+          moveNext = true;
+        }
+        if (eBox.getAttribute('visibility') != 'hidden') {
+          eBoxLast = eBox;
+          x = xTrans(eBox);
+          if (x &gt; maxX) maxX = x;
+        }
+      }
+    }
+    else {
+      setMinus(useElement);
+      var skipDescendantsOf;
+      for (var i=0; i&lt;efBoxes.length; i++) {
+        var eBox = efBoxes[i];
+        if (moveNext) {
+          move(eBoxLast, eBox);
+        }
+        else if (isDescendant(sId, eBox.id) &amp;&amp; (!skipDescendantsOf
+          || !isDescendant(skipDescendantsOf.id, eBox.id))) {
+          eBox.setAttribute('visibility', 'visible');
+          move(eBoxLast, eBox);
+          if (nextClosed(eBox)) skipDescendantsOf = eBox;
+        }
+        else if (isHigherBranch(sId, eBox.id)) {
+          move(eBoxLast, eBox);
+          moveNext = true;
+        }
+        if (eBox.getAttribute('visibility') != 'hidden') {
+          eBoxLast = eBox;
+          x = xTrans(eBox);
+          if (x &gt; maxX) maxX = x;
+        }
+      }
+    }
+    setHeight(yTrans(eBoxLast)+71);
+    setWidth(maxX+300);
+  }
+
+  function collapseAll() {
+    for (var i=0; i&lt;efBoxes.length; i++) {
+      var eBox = efBoxes[i];
+      var useElement = document.getElementById('s'+eBox.id);
+      if (useElement) setPlus(useElement);
+      if (eBox.id != '_1') eBox.setAttribute('visibility', 'hidden');
+    }
+    setHeight(400);
+    setWidth(500);
+  }
+
+  function expandAll() {
+    var eBoxLast;
+    var maxX = 0;
+    for (var i=0; i&lt;efBoxes.length; i++) {
+      var eBox = efBoxes[i];
+      var useElement = document.getElementById('s'+eBox.id);
+      if (useElement) setMinus(useElement);
+      move(eBoxLast, eBox);
+      eBox.setAttribute('visibility', 'visible');
+      eBoxLast = eBox;
+      var x = xTrans(eBox);
+      if (x &gt; maxX) maxX = x;
+    }
+    setHeight(yTrans(eBoxLast)+71);
+    setWidth(maxX+300);
+  }
+
+  function makeVisible(sId) {
+    var childNodes = document.getElementById(sId).childNodes;
+    var hidden = getElementsByClassName('hidden', childNodes);
+    var visible = getElementsByClassName('visible', childNodes);
+    inheritVisibility(hidden);
+    hiddenVisibility(visible);
+  }
+
+  function makeHidden(sId) {
+    var childNodes = document.getElementById(sId).childNodes;
+    var hidden = getElementsByClassName('hidden', childNodes);
+    var visible = getElementsByClassName('visible', childNodes);
+    inheritVisibility(visible);
+    hiddenVisibility(hidden);
+  }
+
+  function inheritVisibility(efElements) {
+    for (var i=0; i&lt;efElements.length; i++) {
+      efElements[i].setAttribute('visibility', 'inherit');
+    }
+  }
+
+  function hiddenVisibility(efElements) {
+    for (var i=0; i&lt;efElements.length; i++) {
+      efElements[i].setAttribute('visibility', 'hidden');
+    }
+  }
+
+  function nextClosed(eBox) {
+    var useElement = document.getElementById('s'+eBox.id);
+    return (useElement &amp;&amp; !notPlus(useElement));
+  }
+
+  function isHigherBranch(sSerialLower, sSerialHigher) {
+    var sLower = sSerialLower.split('_');
+    var sHigher = sSerialHigher.split('_');
+    for (var i=0; i&lt;sLower.length; i++) {
+      if (Number(sHigher[i]) &gt; Number(sLower[i])) return true;
+      else if (Number(sHigher[i]) &lt; Number(sLower[i])) return false;
+    }
+    return false;
+  }
+
+  function isOnHigherLevel(eBoxLower, eBoxHigher) {
+    var sLower = eBoxLower.id.split('_');
+    var sHigher = eBoxHigher.id.split('_');
+    for (var i=0; i&lt;sLower.length; i++) {
+      if (Number(sHigher[i]) &gt; Number(sLower[i])) return true;
+    }
+    return false;
+  }
+
+  function isDescendant(sSerialAsc, sSerialDesc) {
+    return (sSerialDesc.length &gt; sSerialAsc.length &amp;&amp;
+      sSerialDesc.indexOf(sSerialAsc) === 0);
+  }
+
+  function getParent(eBox) {
+    var serial = eBox.id.substring(0, eBox.id.lastIndexOf('_'));
+    return document.getElementById(serial);
+  }
+
+  function move(eBoxLast, eBox) {
+    if (!eBoxLast) return;
+    if (isOnHigherLevel(eBoxLast, eBox)) {
+      eBox.setAttribute('transform',
+        'translate('+xTrans(eBox)+','+(yTrans(eBoxLast)+71)+')');
+      var parent = getParent(eBox);
+      var line = document.getElementById('p'+eBox.id);
+      if (!parent || !line) return;
+      line.setAttribute('y1', String(yTrans(parent)-yTrans(eBox)+23));
+    }
+    else {
+      eBox.setAttribute('transform',
+        'translate('+xTrans(eBox)+','+yTrans(eBoxLast)+')');
+    }
+  }
+
+  function notPlus(eUseElement) {
+    return (eUseElement.getAttributeNS('http://www.w3.org/1999/xlink',
+      'href') != '#plus');
+  }
+
+    eUseElement.setAttributeNS('http://www.w3.org/1999/xlink',
+      'href', '#plus');
+  }
+
+  function setMinus(eUseElement) {
+    eUseElement.setAttributeNS('http://www.w3.org/1999/xlink',
+      'href', '#minus');
+  }
+
+  function setHeight(nHeight) {
+    eSvg.setAttribute('height', nHeight);
+  }
+
+  function setWidth(nWidth) {
+    eSvg.setAttribute('width', nWidth);
+  }
+
+  function yTrans(eBox) {
+    var transform = eBox.getAttribute('transform');
+    var y = Number(transform.substring(10,
+      Number(transform.length)-1).split(',')[1]);
+    if(!y) y = 0;
+    return y;
+  }
+
+  function xTrans(eBox) {
+    var transform = eBox.getAttribute('transform');
+    var x = Number(transform.substring(10,
+      Number(transform.length)-1).split(',')[0]);
+    if(!x) x = 0;
+    return x;
+  }
+]]&gt;&lt;/script&gt;
+
+&lt;defs&gt;
+
+&lt;style type='text/css'&gt;&lt;![CDATA[
+
+svg {pointer-events: none;}
+text {font-family: arial; font-size: 11px;}
+line, polyline, polygon {fill: none; stroke: black;}
+
+.strong {font-size: 12px; font-weight: bold;}
+.small {font-size: 10px;}
+.big {font-size: 15px; fill: #882222;}
+
+.button {fill: white; stroke: black; pointer-events: all;}
+.shadow {fill: #ccccd8; stroke: none;}
+.connection {fill: none; stroke: #666666;}
+.empty {fill: none; stroke: black;}
+.filled {fill: black; stroke: none;}
+
+.boxelement, .boxany, .boxattribute1, .boxanyattribute
+  {fill: #FFFFBB; stroke: #776633; pointer-events: all;}
+.boxattribute2
+  {fill: #FFFFBB; stroke: #776633; pointer-events: all; stroke-dasharray: 2;}
+.boxschema, .boxloop, .boxcompositor {fill: #E7EBF3; stroke: #666677;}
+.boxselector, .boxfield, .boxidc {fill: #E0F7B7; stroke: #667733;}
+
+.lax {fill: white; stroke: black;}
+.skip {fill: #cc6666; stroke: black;}
+.strict {fill: black; stroke: none;}
+
+]]&gt;&lt;/style&gt;
+
+  &lt;symbol class='button' id='plus'&gt;
+    &lt;rect x='1' y='1' width='10' height='10'/&gt;
+    &lt;line x1='3' y1='6' x2='9' y2='6'/&gt;
+    &lt;line x1='6' y1='3' x2='6' y2='9'/&gt;
+  &lt;/symbol&gt;
+  &lt;symbol class='button' id='minus'&gt;
+    &lt;rect x='1' y='1' width='10' height='10'/&gt;
+    &lt;line x1='3' y1='6' x2='9' y2='6'/&gt;
+  &lt;/symbol&gt;
+
+&lt;/defs&gt;
+
+&lt;rect class='button' x='300' y='10' width='20' height='20'
+  onclick='collapseAll()'/&gt;
+&lt;line x1='303' y1='20' x2='317' y2='20'/&gt;
+&lt;text x='330' y='20'&gt;collapse all&lt;/text&gt;
+&lt;rect class='button' x='400' y='10' width='20' height='20'
+  onclick='expandAll()'/&gt;
+&lt;line x1='403' y1='20' x2='417' y2='20'/&gt;
+&lt;line x1='410' y1='13' x2='410' y2='27'/&gt;
+&lt;text x='430' y='20'&gt;expand all&lt;/text&gt;
+
+&lt;g id='_1' class='box' transform='translate(20,50)'&gt;
+&lt;rect class='boxschema' x='0' y='12' width='63' height='21'/&gt;
+&lt;text x='5' y='27'&gt;&lt;tspan class='big'&gt;/ &lt;/tspan&gt;schema&lt;/text&gt;
+&lt;use x='62' y='17' xlink:href='#minus' id='s_1' onclick='show("_1")'/&gt;
+&lt;/g&gt;
+
+&lt;g id='_1_1' class='box' transform='translate(128,50)'&gt;
+&lt;rect class='shadow' x='3' y='3' width='117' height='46'/&gt;
+&lt;rect class='boxelement' x='0' y='0' width='117' height='46'
+  onmouseover='makeVisible("_1_1")' onmouseout='makeHidden("_1_1")'/&gt;
+&lt;text class='hidden' visibility='hidden' x='5' y='13'&gt;nillable: 0&lt;/text&gt;
+&lt;text class='hidden' visibility='hidden' x='5' y='41'&gt;abstract: 0&lt;/text&gt;
+&lt;text class='strong' x='5' y='27'&gt;contact&lt;/text&gt;
+&lt;text class='visible' x='5' y='41'&gt;type: ContactType&lt;/text&gt;
+&lt;line class='connection' x1='-35' y1='23' x2='0' y2='23'/&gt;
+&lt;use x='116' y='17' xlink:href='#minus' id='s_1_1' onclick='show("_1_1")'/&gt;
+&lt;/g&gt;
+
+&lt;g id='_1_1_1' class='box' transform='translate(290,50)'&gt;
+&lt;rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/&gt;
+&lt;circle cx='42' cy='14' r='2'/&gt;
+&lt;circle cx='42' cy='23' r='2'/&gt;
+&lt;circle cx='42' cy='32' r='2'/&gt;
+&lt;text class='small' x='30' y='17'&gt;1&lt;/text&gt;
+&lt;text class='small' x='30' y='26'&gt;2&lt;/text&gt;
+&lt;text class='small' x='30' y='35'&gt;3&lt;/text&gt;
+&lt;line x1='42' y1='14' x2='42' y2='32'/&gt;
+&lt;line class='connection' x1='-35' y1='23' x2='0' y2='23'/&gt;
+&lt;use x='59' y='17' xlink:href='#minus' id='s_1_1_1'
+  onclick='show("_1_1_1")'/&gt;
+&lt;/g&gt;
+
+&lt;g id='_1_1_1_1' class='box' transform='translate(395,50)'&gt;
+&lt;rect class='shadow' x='3' y='3' width='87' height='46'/&gt;
+&lt;rect class='boxelement' x='0' y='0' width='87' height='46'
+  onmouseover='makeVisible("_1_1_1_1")'
+  onmouseout='makeHidden("_1_1_1_1")'/&gt;
+&lt;text class='hidden' visibility='hidden' x='5' y='13'&gt;nillable: 0&lt;/text&gt;
+&lt;text class='hidden' visibility='hidden' x='5' y='41'&gt;abstract: 0&lt;/text&gt;
+&lt;text class='strong' x='5' y='27'&gt;phone&lt;/text&gt;
+&lt;text class='visible' x='5' y='41'&gt;type: string&lt;/text&gt;
+&lt;line class='connection' x1='-35' y1='23' x2='0' y2='23'/&gt;
+&lt;/g&gt;
+
+&lt;g id='_1_1_1_2' class='box' transform='translate(395,121)'&gt;
+&lt;rect class='shadow' x='3' y='3' width='117' height='46'/&gt;
+&lt;rect class='boxelement' x='0' y='0' width='117' height='46'
+  onmouseover='makeVisible("_1_1_1_2")'
+  onmouseout='makeHidden("_1_1_1_2")'/&gt;
+&lt;text class='hidden' visibility='hidden' x='5' y='13'&gt;nillable: 0&lt;/text&gt;
+&lt;text class='hidden' visibility='hidden' x='5' y='41'&gt;abstract: 0&lt;/text&gt;
+&lt;text class='strong' x='5' y='27'&gt;address&lt;/text&gt;
+&lt;text class='visible' x='5' y='41'&gt;type: AddressType&lt;/text&gt;
+&lt;line class='connection' id='p_1_1_1_2' x1='-35' y1='-48' x2='-35' y2='-40'/&gt;
+&lt;path class='connection' d='M-35,-40 Q-35,15 0,23'/&gt;
+&lt;use x='116' y='17' xlink:href='#minus' id='s_1_1_1_2'
+  onclick='show("_1_1_1_2")'/&gt;
+&lt;/g&gt;
+
+&lt;g id='_1_1_1_2_1' class='box' transform='translate(557,121)'&gt;
+&lt;rect class='boxcompositor' x='0' y='8' width='60' height='31' rx='9'/&gt;
+&lt;circle cx='42' cy='14' r='2'/&gt;
+&lt;circle cx='42' cy='23' r='2'/&gt;
+&lt;circle cx='42' cy='32' r='2'/&gt;
+&lt;text class='small' x='30' y='17'&gt;1&lt;/text&gt;
+&lt;text class='small' x='30' y='26'&gt;2&lt;/text&gt;
+&lt;text class='small' x='30' y='35'&gt;3&lt;/text&gt;
+&lt;line x1='42' y1='14' x2='42' y2='32'/&gt;
+&lt;line class='connection' x1='-35' y1='23' x2='0' y2='23'/&gt;
+&lt;use x='59' y='17' xlink:href='#minus' id='s_1_1_1_2_1'
+  onclick='show("_1_1_1_2_1")'/&gt;
+&lt;/g&gt;
+
+&lt;g id='_1_1_1_2_1_1' class='box' transform='translate(662,121)'&gt;
+&lt;rect class='shadow' x='3' y='3' width='87' height='46'/&gt;
+&lt;rect class='boxelement' x='0' y='0' width='87' height='46'
+  onmouseover='makeVisible("_1_1_1_2_1_1")'
+  onmouseout='makeHidden("_1_1_1_2_1_1")'/&gt;
+&lt;text class='hidden' visibility='hidden' x='5' y='13'&gt;nillable: 0&lt;/text&gt;
+&lt;text class='hidden' visibility='hidden' x='5' y='41'&gt;abstract: 0&lt;/text&gt;
+&lt;text class='strong' x='5' y='27'&gt;name&lt;/text&gt;
+&lt;text class='visible' x='5' y='41'&gt;type: string&lt;/text&gt;
+&lt;line class='connection' x1='-35' y1='23' x2='0' y2='23'/&gt;
+&lt;/g&gt;
+
+&lt;g id='_1_1_1_2_1_2' class='box' transform='translate(662,192)'&gt;
+&lt;rect class='shadow' x='3' y='3' width='87' height='46'/&gt;
+&lt;rect class='boxelement' x='0' y='0' width='87' height='46'
+  onmouseover='makeVisible("_1_1_1_2_1_2")'
+  onmouseout='makeHidden("_1_1_1_2_1_2")'/&gt;
+&lt;text class='hidden' visibility='hidden' x='5' y='13'&gt;nillable: 0&lt;/text&gt;
+&lt;text class='hidden' visibility='hidden' x='5' y='41'&gt;abstract: 0&lt;/text&gt;
+&lt;text class='strong' x='5' y='27'&gt;street&lt;/text&gt;
+&lt;text class='visible' x='5' y='41'&gt;type: string&lt;/text&gt;
+&lt;line class='connection' x1='-35' y1='23' x2='0' y2='23'/&gt;
+&lt;/g&gt;
+
+&lt;g id='_1_1_1_2_1_3' class='box' transform='translate(662,263)'&gt;
+&lt;rect class='shadow' x='3' y='3' width='87' height='46'/&gt;
+&lt;rect class='boxelement' x='0' y='0' width='87' height='46'
+  onmouseover='makeVisible("_1_1_1_2_1_3")'
+  onmouseout='makeHidden("_1_1_1_2_1_3")'/&gt;
+&lt;text class='hidden' visibility='hidden' x='5' y='13'&gt;nillable: 0&lt;/text&gt;
+&lt;text class='hidden' visibility='hidden' x='5' y='41'&gt;abstract: 0&lt;/text&gt;
+&lt;text class='strong' x='5' y='27'&gt;city&lt;/text&gt;
+&lt;text class='visible' x='5' y='41'&gt;type: string&lt;/text&gt;
+&lt;line class='connection' id='p_1_1_1_2_1_3'
+  x1='-35' y1='-119' x2='-35' y2='-40'/&gt;
+&lt;path class='connection' d='M-35,-40 Q-35,15 0,23'/&gt;
+&lt;/g&gt;
+
+&lt;/svg&gt;</programlisting>
+    </section>
+
+    <section>
+      <title>SVG výstup (grafická reprezentace)</title>
+
+      <figure id="MY-MODEL-APPENDIX">
+        <title>Grafický výstup</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="images/model_my.svg" format="SVG" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+    </section>
+  </appendix>
+</book>

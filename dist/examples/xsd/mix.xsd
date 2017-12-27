@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:hfp="http://www.w3.org/2001/XMLSchema-hasFacetAndProperty">
+  <xs:element abstract="true" name="attributes">
+    <xs:complexType>
+      <xs:attribute name="required" type="xs:short" use="required"/>
+
+      <xs:attribute name="optionald" type="xs:short" use="optional" default="2"/>
+      <xs:attribute name="optionalf" type="xs:short" use="optional" fixed="2"/>
+
+      <xs:attribute name="prohibited" type="xs:short" use="prohibited"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="elements">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="simpleTypeElement" type="xs:NCName"/>
+
+        <xs:element name="anySimpleTypeElement" type="xs:anySimpleType"/>
+
+        <xs:element name="anyTypeElement"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="first">
+    <xs:complexType>
+      <xs:choice maxOccurs="unbounded" minOccurs="0">
+        <xs:element maxOccurs="5" ref="first"/>
+
+        <xs:element name="second" type="xs:string"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="wildcards">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="anyElement">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:any namespace="urn:x-ns:strict" processContents="strict"/>
+
+              <xs:any namespace="urn:x-ns:skip" processContents="skip"/>
+
+              <xs:any namespace="urn:x-ns:lax" processContents="lax"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
+        <xs:element name="anyAttributeStrict">
+          <xs:complexType>
+            <xs:anyAttribute namespace="##local ##targetNamespace" processContents="strict"/>
+          </xs:complexType>
+        </xs:element>
+
+        <xs:element name="anyAttributeSkip">
+          <xs:complexType>
+            <xs:anyAttribute namespace="##any" processContents="skip"/>
+          </xs:complexType>
+        </xs:element>
+
+        <xs:element name="anyAttributeLax">
+          <xs:complexType>
+            <xs:anyAttribute namespace="##other" processContents="lax"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

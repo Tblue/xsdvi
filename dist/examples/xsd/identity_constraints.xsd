@@ -1,0 +1,61 @@
+<schema targetNamespace="http://www.example.com/Report"
+    xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:r="http://www.example.com/Report"
+    xmlns:xipo="http://www.example.com/IPO"
+    elementFormDefault="qualified">
+        
+    <annotation>
+        <documentation xml:lang="en">
+            Report schema for Example.com
+            Copyright 2000 Example.com. All rights reserved.
+        </documentation>
+    </annotation>
+    
+    <element name="purchaseReport">
+        <complexType>
+            <all>
+                <element name="regions" type="r:RegionsType"/>
+                
+                <element name="parts" type="r:PartsType"/>
+            </all>
+            <attribute name="period"       type="duration"/>
+            <attribute name="periodEnding" type="date"/>
+        </complexType>
+        
+        <unique name="dummy1">
+            <selector xpath="r:regions/r:zip"/>
+            <field xpath="@code"/>
+        </unique>
+        
+        <key name="pNumKey">
+            <selector xpath="r:parts/r:part"/>
+            <field xpath="@number"/>
+        </key>
+        
+        <keyref name="dummy2" refer="r:pNumKey">
+            <selector xpath="r:regions/r:zip/r:part"/>
+            <field xpath="@number"/>
+        </keyref>
+        
+    </element>
+    
+    <complexType name="RegionsType">
+        <sequence>
+            <element name="zip" maxOccurs="unbounded">
+                <complexType>
+                    <sequence>
+                        <element name="part" maxOccurs="unbounded" type="string"/>
+                    </sequence>
+                    <attribute name="code" type="positiveInteger"/>
+                </complexType>
+            </element>
+        </sequence>
+    </complexType>
+    
+    <complexType name="PartsType">
+        <sequence>
+            <element name="part" maxOccurs="unbounded" type="string"/>
+        </sequence>
+    </complexType>
+    
+</schema>
