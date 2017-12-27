@@ -3,6 +3,11 @@
 <project default="dist" name="xsdvi">
     
     <property file="build.properties"/>
+
+    <path id="project.java.classpath">
+        <pathelement location="${build.dir}"/>
+        <fileset dir="/usr/share/java" includes="*.jar *.JAR"/>
+    </path>
     
     <target name="init" description="Initialization">
         <tstamp/>
@@ -23,13 +28,15 @@
     
     <target name="compile" depends="init" description="Compile the java code from ${source.dir} into ${build.dir}">
         <mkdir dir="${build.dir}"/>
-        <javac srcdir="${source.dir}" destdir="${build.dir}"/>
+        <javac includeantruntime="no" srcdir="${source.dir}" destdir="${build.dir}" encoding="iso-8859-1"
+            classpathref="project.java.classpath"/>
     </target>
     
     <target name="javadoc" depends="compile" description="Generate javadoc from all .java files">
         <delete dir="${documents.dir}/api"/>
         <mkdir dir="${documents.dir}/api"/>
-        <javadoc sourcepath="${source.dir}" destdir="${documents.dir}/api" classpath="${build.dir}"/>
+        <javadoc sourcepath="${source.dir}" destdir="${documents.dir}/api" encoding="iso-8859-1"
+            classpathref="project.java.classpath"/>
     </target>
     
     <target name="dist" depends="compile" description="Create the distribution jar file">
