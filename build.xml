@@ -6,7 +6,7 @@
 
     <path id="project.java.classpath">
         <pathelement location="${build.dir}"/>
-        <fileset dir="/usr/share/java" includes="*.jar *.JAR"/>
+        <fileset dir="/usr/share/java" includes="*.jar *.JAR" erroronmissingdir="no"/>
     </path>
     
     <target name="init" description="Initialization">
