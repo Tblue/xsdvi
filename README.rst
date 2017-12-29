@@ -12,6 +12,11 @@ system.
 Please refer to the `XsdVi SourceForge project page`_ and the
 `XsdVi website`_ for more information on XsdVi.
 
+Copyright
+---------
+
+See the file `COPYING <./COPYING>`_ in this repository for details.
+
 
 .. _XsdVi SourceForge project page:
     https://sourceforge.net/projects/xsdvi/
