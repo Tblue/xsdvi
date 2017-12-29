@@ -5,8 +5,7 @@
     <property file="build.properties"/>
 
     <path id="project.java.classpath">
-        <pathelement location="${build.dir}"/>
-        <fileset dir="/usr/share/java" includes="*.jar *.JAR" erroronmissingdir="no"/>
+        <fileset dir="${library.dir}" includes="**/*.jar" casesensitive="no"/>
     </path>
     
     <target name="init" description="Initialization">
